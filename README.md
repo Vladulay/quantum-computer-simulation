@@ -14,7 +14,7 @@ Define a qubit amount and a gate sequence. The function "single_qubit_gate_to_fu
 
 ## Change Log
 29.10.2024
-+ Added multi qubit framework (CNOT is still limited)
++ Added multi qubit framework (CNOT is still limited to always use qubit 1 as control and qubit 2 as target)
 + Added standard gates for quick reference
 
 24.10.2024
