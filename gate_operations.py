@@ -74,6 +74,24 @@ def spherical_to_cartesian(vector_sph: np.array):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # GATES
 
 # Pauli-X
@@ -104,3 +122,29 @@ def S():
 # PI/8
 def T():
     return np.array([[1,0],[0,np.exp(1j*np.pi / 4)]])
+
+
+# general x rotation
+def R_x(angle: float):
+    return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) * X()
+
+
+# general y rotation
+def R_y(angle: float):
+    return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) * Y()
+
+
+# general z rotation
+def R_z(angle: float):
+    return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) * Z()
+
+
+# general rotation
+def R(direction: np.array ,angle: float):
+    print(direction.shape)
+    if direction.shape != (3,):
+        print("Rotation direction " + str(direction) +  " is not a valid vector. Skipping rotation.")
+        return np.identity(2)
+    
+    direction = normalization_check(direction)
+    return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) *( direction[0] * X() + direction[1] * Y() + direction[2] * Z())

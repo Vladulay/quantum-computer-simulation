@@ -4,7 +4,7 @@ import numpy as np
 import qutip as qt
 
 # GOALS
-# - Extend and play around more with the Bloch sphere visualizer by implementing all the standard gates from NS.
+# DONE: Extend and play around more with the Bloch sphere visualizer by implementing all the standard gates from NS.
 # - Implement the gate from eq. (4.8) in NS, convince yourself that it implements the rotation about the axis defined by n.
 # - Create a framework for single qubit circuit creation.
 # - Extend the circuit framework to 2 qubits, where we can apply any one- and two-qubit gates between the qubits.
@@ -22,7 +22,7 @@ import qutip as qt
 # INPUT SPACE
 in_state = np.array([1,1])
 
-gate = go.T()
+gate = go.R(np.array([0,0,1]),np.pi)
 
 assure_normalization = True
 print_bloch_components = True
