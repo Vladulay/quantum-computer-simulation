@@ -6,7 +6,7 @@ import numpy as np
 def single_qubit_gate_operation (input_qubit: np.array, gate: np.array):
     # check if unitary
     if not unitary_check(gate):
-        print("Error: Gate is not a unitary. Skipping gate.")
+        print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
         return input_qubit
     
     # check shapes
@@ -28,7 +28,9 @@ def unitary_check(matrix: np.array):
         return False
     
     mult = np.matmul(matrix.conj().T, matrix)
-    if not np.array_equal(mult, np.identity(2)):
+    
+    compare = np.isclose(mult, np.identity(2))
+    if False in compare:
         return False
     
     return True
@@ -72,5 +74,33 @@ def spherical_to_cartesian(vector_sph: np.array):
 
 
 
+# GATES
+
+# Pauli-X
+def X():
+    return np.array([[0,1],[1,0]])
 
 
+# Pauli-Y
+def Y():
+    return np.array([[0,-1j],[1j,0]])
+
+
+# Pauli-Z
+def Z():
+    return np.array([[1,0],[0,-1]])
+
+
+# Hadamard
+def H():
+    return np.array([[1,1],[1,-1]]) * (1/np.sqrt(2))
+
+
+# Phase
+def S():
+    return np.array([[1,0],[0,1j]])
+
+
+# PI/8
+def T():
+    return np.array([[1,0],[0,np.exp(1j*np.pi / 4)]])
