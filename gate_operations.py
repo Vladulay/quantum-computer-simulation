@@ -12,21 +12,26 @@ def gate_operation (input_state: np.array, gate: np.array):
         print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
         return input_state
     
-        
     # multiply  out = G*v
     output_qubit = np.matmul(gate, input_state)
 
     return output_qubit
 
 
-def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sphere: qt.Bloch):
+def plot_bloch_state(state: np.array,  bloch_sphere: qt.Bloch, color: str = "royalblue"):
+    colors = [color]
+    
+    bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(state)), colors)
+
+
+def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sphere: qt.Bloch, color_in: str, color_out: str):
     # plot of in state
-    bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(in_state)))
+    plot_bloch_state(in_state, bloch_sphere, color_in)
 
     out_state = gate_operation(in_state, gate)
     
     # plot out_state
-    bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(out_state)))
+    plot_bloch_state(out_state, bloch_sphere, color_out)
     
     return out_state
 
@@ -115,6 +120,7 @@ def tensor_states(state1: np.array, state2: np.array):
     return new_state
 
 
+# np.kron()
 def tensor_gates(gate1: np.array, gate2: np.array):
     gate_dim = gate1.shape[0] * gate2.shape[0]
     
@@ -150,8 +156,7 @@ def tensor_gates(gate1: np.array, gate2: np.array):
     return new_gate
 
 
-
-def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_index: int): # WRONG
+def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_index: int): 
     single_qubit_gates = []
     index = 0
     while index < qubit_amount:

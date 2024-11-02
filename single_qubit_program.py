@@ -2,6 +2,8 @@ import numpy as np
 import gate_operations as go
 import qutip as qt
 
+# Only visualize seperate states by calls (custom colors etc)
+
 # INPUT SPACE
 state = np.array([1,0])
 
@@ -15,7 +17,7 @@ assure_normalization = True
 
 
 # create plot
-bloch = qt.Bloch()
+bloch_sphere = qt.Bloch()
 
 
 
@@ -28,8 +30,13 @@ if assure_normalization:
 
 
 # SEQUENCE
-state = go.plotted_single_qubit_operation(state, go.H(), bloch)
-state = go.plotted_single_qubit_operation(state, go.R_z(np.pi/2), bloch)
+state = go.gate_operation(state, go.H())
+state = go.gate_operation(state, go.R_z(np.pi/2))
+state = go.gate_operation(state, go.R_x(np.pi))
+state = go.gate_operation(state, go.R_x(np.pi/2))
+state = go.gate_operation(state, go.R_y(np.pi/2))
+
+go.plot_bloch_state(state, bloch_sphere, "green")
 
 
 
@@ -46,5 +53,4 @@ state = go.plotted_single_qubit_operation(state, go.R_z(np.pi/2), bloch)
 
 
 
-
-bloch.show()
+bloch_sphere.show()
