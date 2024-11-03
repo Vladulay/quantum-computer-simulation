@@ -64,7 +64,4 @@ print(state)
 
 
 
-print(go.CNOT(qubit_amount,2,1))
-
-
 

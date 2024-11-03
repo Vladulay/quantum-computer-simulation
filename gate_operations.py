@@ -301,6 +301,76 @@ def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
     return CNOT
 
 
+def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
+    """
+    Constructs an arbitrary SWAP gate matrix representation
+
+    Args:
+        qubit_amount: amount of qubits in the system
+        qubit1_index, qubit2_index: indices of the qubits one wants to swap
+
+    Returns:
+        np.array: correct SWAP gate matrix, dimensions (qubit_amount x qubit_amount)
+    """
+    
+    
+    # Check for correct index stuctures
+    if qubit1_index == qubit2_index:
+        print("Error: Swaping qubits with same index is useless. Skipping gate.")
+        return np.identity(2**qubit_amount)
+    
+    if qubit1_index > qubit_amount or qubit2_index > qubit_amount:
+        print("Error: a swap qubit index is out of range. Skipping gate.")
+        return np.identity(2**qubit_amount)
+    
+    # sort indices by magnitude 1>2
+    if qubit1_index < qubit2_index:
+        temp = qubit1_index
+        qubit1_index = qubit2_index
+        qubit2_index = temp
+    
+    # Prepare rightmost matrices of tensor product
+    matrix_00 = np.identity(2)
+    matrix_01 = np.identity(2)
+    matrix_10 = np.identity(2)
+    matrix_11 = np.identity(2)
+    
+    if qubit1_index == qubit_amount:
+        matrix_00 = np.array([[1, 0],
+                              [0, 0]])  # |0><0|
+        matrix_01 = np.array([[0, 1],
+                              [0, 0]])  # |0><1|
+        matrix_10 = np.array([[0, 0],
+                              [1, 0]])  # |1><0|
+        matrix_11 = np.array([[0, 0],
+                              [0, 1]])  # |1><1|
+    
+    # Compute tensor products
+    index = qubit_amount - 1
+    while index > 0:
+        if index == qubit1_index:
+            matrix_00 = np.kron(np.array([[1, 0],[0, 0]]),matrix_00)  # |0><0|
+            matrix_01 = np.kron(np.array([[0, 1],[0, 0]]),matrix_01)  # |0><1|
+            matrix_10 = np.kron(np.array([[0, 0],[1, 0]]),matrix_10)  # |1><0|
+            matrix_11 = np.kron(np.array([[0, 0],[0, 1]]),matrix_11)  # |1><1|
+            
+        elif index == qubit2_index:
+            matrix_00 = np.kron(np.array([[1, 0],[0, 0]]),matrix_00)  # |0><0|
+            matrix_01 = np.kron(np.array([[0, 0],[1, 0]]),matrix_01)  # |1><0|
+            matrix_10 = np.kron(np.array([[0, 1],[0, 0]]),matrix_10)  # |0><1|
+            matrix_11 = np.kron(np.array([[0, 0],[0, 1]]),matrix_11)  # |1><1|
+        
+        else:
+            matrix_00 = np.kron(np.identity(2),matrix_00)  
+            matrix_01 = np.kron(np.identity(2),matrix_01)  
+            matrix_10 = np.kron(np.identity(2),matrix_10)  
+            matrix_11 = np.kron(np.identity(2),matrix_11)  
+        
+        index -= 1
+    
+    SWAP = matrix_00 + matrix_01 + matrix_10 + matrix_11
+    return SWAP
+
 
 
 
