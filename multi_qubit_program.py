@@ -20,7 +20,7 @@ import qutip as qt
 
 
 # INPUT SPACE
-qubit_amount = 2 # all qubits are initilized as |0〉
+qubit_amount = 3 # all qubits are initilized as |0〉
 
 
 
@@ -55,7 +55,7 @@ state = go.gate_operation(state, gate1)
 print(state)
 state = go.gate_operation(state, gate2)
 print(state)
-state = go.gate_operation(state, go.CNOT())
+state = go.gate_operation(state, go.CNOT(qubit_amount,1,2))
 print(state)
 state = go.gate_operation(state, gate1)
 print(state)
@@ -64,7 +64,7 @@ print(state)
 
 
 
-
+print(go.CNOT(qubit_amount,2,1))
 
 
 

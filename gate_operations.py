@@ -244,6 +244,63 @@ def R(direction: np.array ,angle: float):
     return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) *( direction[0] * X() + direction[1] * Y() + direction[2] * Z())
 
 
-# CURRENTLY ALWAYS 1ST QUBIT CONTROL AND 2ND TARGET
-def CNOT():
-    return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]])
+def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
+    """
+    Constructs an arbitrary CNOT gate matrix representation
+
+    Args:
+        qubit_amount: amount of qubits in the system
+        control_qubit_index: index of the control qubit
+        target_qubit_index: index of the target qubit
+
+    Returns:
+        np.array: correct CNOT gate matrix, dimensions (qubit_amount x qubit_amount)
+    """
+    
+    
+    # Check for correct index stuctures
+    if control_qubit_index == target_qubit_index:
+        print("Error: target and control qubit cannot have same index. Skipping gate.")
+        return np.identity(2**qubit_amount)
+    
+    if control_qubit_index > qubit_amount or target_qubit_index > qubit_amount:
+        print("Error: target or control qubit cannot have greater index then qubit amount. Skipping gate.")
+        return np.identity(2**qubit_amount)
+      
+    # Prepare rightmost matrices of tensor product
+    leave_matrix = np.identity(2)
+    flip_matrix = np.identity(2)
+    
+    if control_qubit_index == qubit_amount:
+        leave_matrix = np.array([[1, 0],
+                                 [0, 0]])  # |0><0|
+        flip_matrix = np.array([[0, 0],
+                                [0, 1]])  # |1><1|
+    
+    if target_qubit_index == qubit_amount:
+        flip_matrix = X()
+    
+    # Compute tensor products
+    index = qubit_amount - 1
+    while index > 0:
+        if index == target_qubit_index:
+            leave_matrix = np.kron(np.identity(2),leave_matrix)
+            flip_matrix = np.kron(X(),flip_matrix)
+            
+        elif index == control_qubit_index:
+            leave_matrix = np.kron(np.array([[1, 0],[0, 0]]),leave_matrix) # apply |0><0|
+            flip_matrix = np.kron(np.array([[0, 0],[0, 1]]),flip_matrix)   # apply |1><1|
+        
+        else:
+            leave_matrix = np.kron(np.identity(2),leave_matrix)
+            flip_matrix = np.kron(np.identity(2),flip_matrix)
+        
+        index -= 1
+    
+    CNOT = leave_matrix + flip_matrix # generalized version of CNOT=(∣0⟩⟨0∣⊗I)+(∣1⟩⟨1∣⊗X)
+    return CNOT
+
+
+
+
+
