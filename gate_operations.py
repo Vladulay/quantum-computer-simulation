@@ -1,6 +1,7 @@
 # New FIle 
 import numpy as np
 import qutip as qt
+import timeit
 
 
 # MAIN FUNCTIONS
@@ -126,32 +127,19 @@ def tensor_gates(gate1: np.array, gate2: np.array):
     
     new_gate = np.zeros((gate_dim,gate_dim),complex)
     
-    gate1_lin_index = 0
-    while gate1_lin_index < gate1.shape[0]:
+    for gate1_lin_index in range(0,gate1.shape[0]):
         
-        gate1_col_index = 0
-        while gate1_col_index < gate1.shape[0]:
+        for gate1_col_index in range(0,gate1.shape[0]):
             
-            gate2_lin_index = 0
-            while gate2_lin_index < gate2.shape[0]:
+            for gate2_lin_index in range(0,gate2.shape[0]):
                 
-                gate2_col_index = 0
-                while gate2_col_index < gate2.shape[0]:
-                    
+                for gate2_col_index in range(0,gate2.shape[0]):
                     
                     new_gate_col_index = gate1_col_index * gate2.shape[0] + gate2_col_index
                     new_gate_lin_index = gate1_lin_index * gate2.shape[0] + gate2_lin_index
                     
                     new_gate[new_gate_lin_index , new_gate_col_index] = gate1[gate1_lin_index, gate1_col_index] * gate2[gate2_lin_index, gate2_col_index]
-                    
-                    
-                    gate2_col_index += 1
                 
-                gate2_lin_index += 1
-            
-            gate1_col_index += 1
-        
-        gate1_lin_index += 1
     
     return new_gate
 
@@ -174,6 +162,27 @@ def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_inde
     
     
     return new_gate
+
+
+def single_qubit_gate_to_full_gate2(gate: np.array ,qubit_amount: int, qubit_index: int): 
+    single_qubit_gates = []
+    index = 0
+    while index < qubit_amount:
+        if index == qubit_index - 1:
+            single_qubit_gates.append(gate)
+        else:
+            single_qubit_gates.append(np.identity(2,complex))
+        
+        index += 1
+    
+    new_gate = single_qubit_gates.pop()
+    
+    while len(single_qubit_gates) > 0:
+        new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+    
+    
+    return new_gate
+
 
 
 
@@ -370,6 +379,14 @@ def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
     
     SWAP = matrix_00 + matrix_01 + matrix_10 + matrix_11
     return SWAP
+
+
+
+
+
+
+
+
 
 
 

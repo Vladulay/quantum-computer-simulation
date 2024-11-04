@@ -2,6 +2,7 @@
 import gate_operations as go
 import numpy as np
 import qutip as qt
+import timeit
 
 # GOALS
 # DONE: Extend and play around more with the Bloch sphere visualizer by implementing all the standard gates from NS.
@@ -40,6 +41,8 @@ state[0] = 1
 # GATE DEFINITIONS
 gate1 = go.single_qubit_gate_to_full_gate(go.H(), qubit_amount, 1)
 gate2 = go.single_qubit_gate_to_full_gate(go.H(), qubit_amount, 2)
+
+#print(timeit.timeit("go.single_qubit_gate_to_full_gate(go.H(), 3, 1)", setup='import gate_operations as go'))
 
 
 
