@@ -13,6 +13,12 @@ Define an initial state and a sequence of plotted gate operations to directly se
 Define a qubit amount and a gate sequence. The function "single_qubit_gate_to_full_gate" tensors any single qubit gate into the appropriate multi qubit matrix form.
 
 ## Change Log
+04.11.2024
++ Created Unitest tool for checking the functions. 
++ Updated Bloch visualizer for color specfication.
++ Implemented a SWAP gate between arbitrary qubits.
++ Decomposed the CNOT gate and implemented the Control-Target Swap.
+
 29.10.2024
 + Added multi qubit framework (CNOT is still limited to always use qubit 1 as control and qubit 2 as target)
 + Added standard gates for quick reference
