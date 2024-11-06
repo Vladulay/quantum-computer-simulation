@@ -37,6 +37,8 @@ else:
 
 print(CNOT_constructed)
 
+#CNOT_constructed = go.CNOT_from_SWAP(qubit_amount, control_index, target_index)
+
 print("Are they the same?")
 compare = np.isclose(CNOT_constructed, CNOT)
 if False in compare:

@@ -44,7 +44,6 @@ def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sph
 
 
 
-
 # HELPERS
 
 def unitary_check(matrix: np.array):
@@ -338,7 +337,53 @@ def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
     return SWAP
 
 
+def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
+    """
+    Constructs an arbitrary CNOT gate matrix representation by using SWAP gates and the CNOT gate w/ control 1 & target 2.
 
+    Args:
+        qubit_amount: amount of qubits in the system
+        control_index: index of the control qubit
+        target_index: index of the target qubit
+
+    Returns:
+        np.array: correct CNOT gate matrix, dimensions (qubit_amount x qubit_amount)
+    """
+    
+    # Check for correct index stuctures
+    if control_index == target_index:
+        print("Error: target and control qubit cannot have same index. Skipping gate.")
+        return np.identity(2**qubit_amount)
+    
+    if control_index > qubit_amount or target_index > qubit_amount:
+        print("Error: target or control qubit cannot have greater index then qubit amount. Skipping gate.")
+        return np.identity(2**qubit_amount)
+        
+    
+    
+    
+    gate = SWAP(qubit_amount, 1, control_index)  # SWAP controls & targets to 1 & 2  
+    if target_index != 1:      
+        gate = np.matmul(SWAP(qubit_amount, 2, target_index) ,gate)
+        
+        
+        gate = np.matmul(CNOT(qubit_amount,1,2) ,gate) # apply CNOT
+        
+        
+        gate = np.matmul(SWAP(qubit_amount, 2, target_index) ,gate)
+        gate = np.matmul(SWAP(qubit_amount, 1, control_index) ,gate)  # SWAP back
+    else: 
+        if control_index != 2:
+            gate = np.matmul(SWAP(qubit_amount, 2, control_index) ,gate)
+        
+        gate = np.matmul(CNOT(qubit_amount,1,2) ,gate) # apply CNOT
+        
+        if control_index != 2:
+            gate = np.matmul(SWAP(qubit_amount, 2, control_index) ,gate)
+        
+        gate = np.matmul(SWAP(qubit_amount, 1, control_index) ,gate) # SWAP back
+    
+    return gate
 
 
 
