@@ -14,10 +14,9 @@ Define a qubit amount and a gate sequence. The function "single_qubit_gate_to_fu
 
 ## Change Log
 04.11.2024
-+ Created Unitest tool for checking the functions. 
-+ Updated Bloch visualizer for color specfication.
-+ Implemented a SWAP gate between arbitrary qubits.
-+ Decomposed the CNOT gate and implemented the Control-Target Swap.
++ Added seperate state plot function for Bloch visualizer with color specfication
++ Implemented a SWAP gate between arbitrary qubits
++ Implemented a CNOT gate between arbitrary qubits
 
 29.10.2024
 + Added multi qubit framework (CNOT is still limited to always use qubit 1 as control and qubit 2 as target)
