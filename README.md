@@ -13,7 +13,7 @@ Define an initial state and a sequence of plotted gate operations to directly se
 Define a qubit amount and a gate sequence. The function "single_qubit_gate_to_full_gate" tensors any single qubit gate into the appropriate multi qubit matrix form.
 
 ## Change Log
-04.11.2024
+06.11.2024
 + Added seperate state plot function for Bloch visualizer with color specfication
 + Implemented a SWAP gate between arbitrary qubits
 + Implemented a CNOT gate between arbitrary qubits
