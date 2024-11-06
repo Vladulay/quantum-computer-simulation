@@ -21,7 +21,7 @@ import timeit
 
 
 # INPUT SPACE
-qubit_amount = 3 # all qubits are initilized as |0〉
+qubit_amount = 2 # all qubits are initilized as |0〉
 
 
 
@@ -66,5 +66,11 @@ state = go.gate_operation(state, gate2)
 print(state)
 
 
+
+# SWAP From CNOTs
+
+#SWAP_almost = np.matmul(go.CNOT(qubit_amount,2,1),go.CNOT(qubit_amount,1,2))
+#SWAP = np.matmul(go.CNOT(qubit_amount,1,2),SWAP_almost)
+#print(SWAP)
 
 
