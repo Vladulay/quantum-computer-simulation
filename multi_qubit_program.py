@@ -1,20 +1,6 @@
 # Hi
 import gate_operations as go
 import numpy as np
-import qutip as qt
-import timeit
-
-# GOALS
-# DONE: Extend and play around more with the Bloch sphere visualizer by implementing all the standard gates from NS.
-# DONE: Implement the gate from eq. (4.8) in NS, convince yourself that it implements the rotation about the axis defined by n.
-# DONE: Create a framework for single qubit circuit creation.
-# DONE: Extend the circuit framework to 2 qubits, where we can apply any one- and two-qubit gates between the qubits.
-# - Look into/implement some automated testing of your functions inside python (see e.g. Unittest). 
-
-
-
-
-
 
 
 

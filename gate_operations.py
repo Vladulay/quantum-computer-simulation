@@ -1,7 +1,5 @@
-# New FIle 
 import numpy as np
 import qutip as qt
-import timeit
 
 
 # MAIN FUNCTIONS
@@ -140,7 +138,25 @@ def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_inde
     return new_gate
 
 
-
+def multi_single_qubit_gates_to_full_gate(gate: np.array ,qubit_amount: int, qubit_indices: []): 
+    single_qubit_gates = []
+    
+    index = 0
+    while index < qubit_amount:
+        if index + 1 in qubit_indices:
+            single_qubit_gates.append(gate)
+        else:
+            single_qubit_gates.append(np.identity(2,complex))
+        
+        index += 1
+    
+    new_gate = single_qubit_gates.pop()
+    
+    while len(single_qubit_gates) > 0:
+        new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+    
+    
+    return new_gate
 
 
 
@@ -280,7 +296,7 @@ def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
     
     # Check for correct index stuctures
     if qubit1_index == qubit2_index:
-        print("Error: Swaping qubits with same index is useless. Skipping gate.")
+        print("Warning: Swaping qubits with same index is useless. Skipping gate.")
         return np.identity(2**qubit_amount)
     
     if qubit1_index > qubit_amount or qubit2_index > qubit_amount:
@@ -385,9 +401,99 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
 
 
 
+class instruction:
+    gate = str
+    qubit = [1]
+    direction = np.array([0,0,1])
+    angle = 0.0
 
 
 
+def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount: int):
+    """
+    Applies a gate to a state, defined by an instruction class object.
+
+        state: input state
+        instruction: instruction class object defining gate operation
+        qubit_amount: amount of qubits in the system
+
+    Returns:
+        np.array: state after application
+    """
+    
+    match instruction.gate:
+        case "H":
+            state = gate_operation(state, multi_single_qubit_gates_to_full_gate(H(), qubit_amount, instruction.qubit))
+            return state
+        case "X":
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(X(), qubit_amount, instruction.qubit))
+             return state
+        case "Y":
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Y(), qubit_amount, instruction.qubit))
+             return state
+        case "Z":
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Z(), qubit_amount, instruction.qubit))
+             return state
+        case "S":
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(S(), qubit_amount, instruction.qubit))
+             return state
+        case "T":
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(T(), qubit_amount, instruction.qubit))
+             return state
+        case "Rx":
+             gate = R_x(instruction.angle)
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
+             return state
+        case "Ry":
+             gate = R_y(instruction.angle)
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
+             return state
+        case "Rz":
+             gate = R_z(instruction.angle)
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
+             return state
+        case "R":
+             gate = R(instruction.direction, instruction.angle)
+             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
+             return state
+        case "CNOT":
+             gate = CNOT(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+             state = gate_operation(state, gate)
+             return state
+        case "SWAP":
+             gate = SWAP(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+             state = gate_operation(state, gate)
+             return state
+        case _:
+             return state
 
 
+def apply_instruction_list(state: np.array, instruction_list: [], qubit_amount: int = 0):
+    """
+    Applies a gate to a state, defined by an instruction list.
+    The syntax is ["gate_name",[qubit_indices],(angle),(direction)]
 
+        state: input state        
+        instruction_list: list containing a single instruction
+        qubit_amount: amount of qubits in state
+
+    Returns:
+        np.array: state after application
+    """
+    if qubit_amount == 0:
+        qubit_amount = round(np.log2(len(state)))
+    
+    instr = instruction()
+    instr.gate = instruction_list[0]
+    instr.qubit = instruction_list[1]
+    
+    list_size = len(instruction_list)
+    
+    if list_size > 2:
+        instr.angle = instruction_list[2]
+    if list_size > 3:
+        instr.direction = instruction_list[3]
+    
+    return apply_instruction(state, instr, qubit_amount)
+    
+    
