@@ -213,7 +213,6 @@ def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
     """
     Constructs an arbitrary CNOT gate matrix representation
 
-    Args:
         qubit_amount: amount of qubits in the system
         control_qubit_index: index of the control qubit
         target_qubit_index: index of the target qubit
@@ -266,11 +265,11 @@ def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
     return CNOT
 
 
+
 def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
     """
     Constructs an arbitrary SWAP gate matrix representation
 
-    Args:
         qubit_amount: amount of qubits in the system
         qubit1_index, qubit2_index: indices of the qubits one wants to swap
 
@@ -341,7 +340,6 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
     """
     Constructs an arbitrary CNOT gate matrix representation by using SWAP gates and the CNOT gate w/ control 1 & target 2.
 
-    Args:
         qubit_amount: amount of qubits in the system
         control_index: index of the control qubit
         target_index: index of the target qubit

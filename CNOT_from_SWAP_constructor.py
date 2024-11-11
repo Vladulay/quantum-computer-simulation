@@ -3,7 +3,7 @@
 import gate_operations as go
 import numpy as np
 
-qubit_amount = 5
+qubit_amount = 7
 control_index = 5
 target_index = 3
 
