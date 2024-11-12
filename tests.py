@@ -2,6 +2,7 @@ import unittest
 import gate_operations as go
 import random
 import numpy as np
+from functools import reduce
 
 class TestGates(unittest.TestCase):
 
@@ -14,6 +15,22 @@ class TestGates(unittest.TestCase):
         CNOT2 = go.CNOT_from_SWAP(qubit_amount, control_qubit_index, target_qubit_index)
         
         compare = np.allclose(CNOT1, CNOT2)
+        
+        self.assertTrue(compare)
+    
+    
+    def test_CNOT_identity(self):
+        qubit_amount = random.randrange(2, 6)
+        control_qubit_index = random.randrange(1, qubit_amount)
+        target_qubit_index = random.randrange(1, qubit_amount)
+        
+        CNOT = go.CNOT(qubit_amount, control_qubit_index, target_qubit_index)
+        
+        prod = np.matmul(CNOT, CNOT)
+        
+        ident = np.identity(2**qubit_amount)
+                
+        compare = np.allclose(prod, ident)
         
         self.assertTrue(compare)
     
@@ -380,7 +397,105 @@ class TestGates(unittest.TestCase):
         
         self.assertTrue(compare)
         
-
+    
+    def bell_states(self):
+        H1 = go.single_qubit_gate_to_full_gate(go.H(), 2, 1)
+        CNOT12 = go.CNOT(2,1,2)
+        X1 = go.single_qubit_gate_to_full_gate(go.X(), 2, 1)
+        X2 = go.single_qubit_gate_to_full_gate(go.X(), 2, 2)
+        
+        phi_plus  = np.array([1,0,0,0])
+        phi_plus = go.gate_operation(phi_plus, H1)
+        phi_plus = go.gate_operation(phi_plus, CNOT12)
+        
+        compare = np.allclose(phi_plus, np.array([0.70710678, 0, 0, 0.70710678]))
+        
+        self.assertTrue(compare)
+        
+        phi_minus  = np.array([1,0,0,0])
+        phi_minus = go.gate_operation(phi_minus, X1)
+        phi_minus = go.gate_operation(phi_minus, H1)
+        phi_minus = go.gate_operation(phi_minus, CNOT12)
+        
+        compare = np.allclose(phi_minus, np.array([0.70710678, 0, 0, 0.70710678]))
+        
+        self.assertTrue(compare)
+        
+        psi_plus  = np.array([1,0,0,0])
+        psi_plus = go.gate_operation(psi_plus, X2)
+        psi_plus = go.gate_operation(psi_plus, H1)
+        psi_plus = go.gate_operation(psi_plus, CNOT12)
+        
+        compare = np.allclose(psi_plus, np.array([0, 0.70710678, 0.70710678, 0]))
+        
+        self.assertTrue(compare)
+        
+        psi_minus  = np.array([1,0,0,0])
+        psi_minus = go.gate_operation(psi_minus, X1)
+        psi_minus = go.gate_operation(psi_minus, X2)
+        psi_minus = go.gate_operation(psi_minus, H1)
+        psi_minus = go.gate_operation(psi_minus, CNOT12)
+        
+        compare = np.allclose(psi_minus, np.array([0, 0.70710678, -0.70710678, 0]))
+        
+        self.assertTrue(compare)
+    
+    
+    def GHZ_state(self):
+        H1 = go.single_qubit_gate_to_full_gate(go.H(), 3, 1)
+        CNOT12 = go.CNOT(3,1,2)
+        CNOT23 = go.CNOT(3,2,3)
+        
+        GHZ = np.zeros((2**3,))
+        GHZ[0] = 1
+        
+        GHZ = go.gate_operation(GHZ, H1)
+        GHZ = go.gate_operation(GHZ, CNOT12)
+        GHZ = go.gate_operation(GHZ, CNOT23)
+        
+        compare = np.allclose(GHZ, np.array([0.70710678, 0, 0, 0,0, 0, 0, 0.70710678]))
+        
+        self.assertTrue(compare)
+    
+    
+    def compare_instructional_syntax(self):
+        state = np.array([random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,1)])
+        state = go.normalization_check(state)
+        
+        # Computation with direct gate functions
+        gate1 = go.single_qubit_gate_to_full_gate(go.H(),3,1)
+        gate2 = go.single_qubit_gate_to_full_gate(go.X(),3,2)
+        gate3 = go.single_qubit_gate_to_full_gate(go.R_x(np.pi),3,2)
+        gate4 = go.CNOT(3,2,1)
+        gate5 = go.single_qubit_gate_to_full_gate(go.R(np.array([0,1,0]),np.pi),3,3)
+        gate6 = go.single_qubit_gate_to_full_gate(go.T(),3,1)
+        gate7 = go.single_qubit_gate_to_full_gate(go.T(),3,2)
+        gate8 = go.single_qubit_gate_to_full_gate(go.T(),3,3)
+        
+        state1 = go.gate_operation(state, gate1)
+        state1 = go.gate_operation(state1, gate2)
+        state1 = go.gate_operation(state1, gate3)
+        state1 = go.gate_operation(state1, gate4)
+        state1 = go.gate_operation(state1, gate5)
+        state1 = go.gate_operation(state1, gate6)
+        state1 = go.gate_operation(state1, gate7)
+        state1 = go.gate_operation(state1, gate8)
+        
+        
+        # Computation with instruction list
+        instructions = [["H",[1]],
+                        ["X",[2]],
+                        ["Rx",[2],np.pi],
+                        ["CNOT",[2,1]],
+                        ["R",[3],np.pi,np.array([0,1,0])],
+                        ["T",[1,2,3]]]
+        
+        state2 = reduce(go.apply_instruction_list, instructions, state)
+        
+        compare = np.allclose(state1,state2)
+        
+        self.assertTrue(compare)
+    
 
 
 if __name__ == '__main__':
