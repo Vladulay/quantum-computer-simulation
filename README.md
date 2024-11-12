@@ -15,6 +15,27 @@ There are several ways to go about applying gate operations.
 - One can use the _apply_instruction_ function. For this, one has to create an instance of the _instruction_ class and define gate and target qubits, which are properties of this object.
 - One can apply a list of instructions with the _reduce_ function from the _functools_ package and _apply_instruction_list_. This is the simplest way to quickly apply large circuits.
 
+### Instruction Class
+Has four properties, which one can define in a list in this order to use the instructional list syntax
+ - _gate_ (String) which specifies the gate one wants to apply
+ - _qubit_ (List) which qubit indices to apply the gates to (beginning with 1)
+ - _angle_ (float) how much to rotate (if rotation gate)
+ - _direction_ (np.array) what axis to rotate about (if general rotation gate)
+
+The following instructions are possible:
+- ["H",[1,2,5]] - apply Hadamard gate to qubit 1,2 and 5
+- ["X",[1,2,5]] - apply Pauli X gate to qubit 1,2 and 5
+- ["Y",[1,2,5]] - apply Pauli X gate to qubit 1,2 and 5
+- ["Z",[1,2,5]] - apply Pauli X gate to qubit 1,2 and 5
+- ["S",[1,2,5]] - apply phase gate to qubit 1,2 and 5
+- ["T",[1,2,5]] - apply $\pi/8$ gate to qubit 1,2 and 5
+- ["Rx",[1,2,5], np.pi] - apply x-rotation gate to qubit 1,2 and 5 with the angle $\pi$
+- ["Ry",[1,2,5], np.pi] - apply y-rotation gate to qubit 1,2 and 5 with the angle $\pi$
+- ["Rz",[1,2,5], np.pi] - apply z-rotation gate to qubit 1,2 and 5 with the angle $\pi$
+- ["Rx",[1,2,5], np.pi, np.array([0,1,0])] - apply x-rotation gate to qubit 1,2 and 5 with the angle $\pi$ about the axis [0,1,0]
+- ["CNOT",[2,1]] - apply CNOT gate with the control qubit 2 and the target qubit 1
+- ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
+
 ## Change Log
 12.11.2024
 + Added tutorial jupyter notebook
