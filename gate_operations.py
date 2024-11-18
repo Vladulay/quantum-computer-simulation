@@ -400,16 +400,51 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
     return gate
 
 
-
 class instruction:
-    gate = str
-    qubit = [1]
-    direction = np.array([0,0,1])
-    angle = 0.0
+    def __init__(self, gate=None, qubit=None, angle=None, direction=None):
+        if gate is None:
+            gate = ""
+        self.gate = gate
+        
+        if qubit is None:
+            qubit = [1]
+        self.qubit = qubit
+        
+        if direction is None:
+            direction = np.array([0,0,1])
+        self.direction = direction
+        
+        if angle is None:
+            angle = 0.0
+        self.angle = angle
+    
+    
+    def create_from_list(instruction_list=None):
+        if instruction_list is None:
+            print("Warning: No instruction list given")
+            return
+        
+        gate = instruction_list[0]
+        qubit = instruction_list[1]
+        
+        list_size = len(instruction_list)
+        
+        if list_size == 3:
+            angle = instruction_list[2]
+            self = instruction(gate,qubit,angle)
+            return self 
+        
+        if list_size == 4:
+            angle = instruction_list[2]
+            direction = instruction_list[3]
+            self = instruction(gate,qubit,angle, direction)
+            return self 
+        
+        self = instruction(gate,qubit)
+        return self
+            
 
-
-
-def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount: int):
+def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount: int = None):
     """
     Applies a gate to a state, defined by an instruction class object.
 
@@ -420,6 +455,9 @@ def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount:
     Returns:
         np.array: state after application
     """
+    
+    if qubit_amount is None:
+        qubit_amount = round(np.log2(len(state)))
     
     match instruction.gate:
         case "H":
@@ -468,32 +506,19 @@ def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount:
              return state
 
 
-def apply_instruction_list(state: np.array, instruction_list: [], qubit_amount: int = 0):
+def create_instruction_list(instruction_list: list):
     """
-    Applies a gate to a state, defined by an instruction list.
-    The syntax is ["gate_name",[qubit_indices],(angle),(direction)]
+    Transforms a list of instruction lists (["R",[2],np.pi,np.array([1,0,0])]) into a list of instruction class objects
 
-        state: input state        
-        instruction_list: list containing a single instruction
-        qubit_amount: amount of qubits in state
+        instruction_list: list of instruction lists
 
     Returns:
-        np.array: state after application
+        list: list of instruction objects
     """
-    if qubit_amount == 0:
-        qubit_amount = round(np.log2(len(state)))
     
-    instr = instruction()
-    instr.gate = instruction_list[0]
-    instr.qubit = instruction_list[1]
-    
-    list_size = len(instruction_list)
-    
-    if list_size > 2:
-        instr.angle = instruction_list[2]
-    if list_size > 3:
-        instr.direction = instruction_list[3]
-    
-    return apply_instruction(state, instr, qubit_amount)
-    
-    
+    new_list = []
+        
+    for instr in instruction_list:
+        new_list.append(instruction.create_from_list(instr))
+        
+    return new_list

@@ -483,14 +483,14 @@ class TestGates(unittest.TestCase):
         
         
         # Computation with instruction list
-        instructions = [["H",[1]],
-                        ["X",[2]],
-                        ["Rx",[2],np.pi],
-                        ["CNOT",[2,1]],
-                        ["R",[3],np.pi,np.array([0,1,0])],
-                        ["T",[1,2,3]]]
+        instructions = go.create_instruction_list([["H",[1]],
+                                                   ["X",[2]],
+                                                   ["Rx",[2],np.pi],
+                                                   ["CNOT",[2,1]],
+                                                   ["R",[3],np.pi,np.array([0,1,0])],
+                                                   ["T",[1,2,3]]])
         
-        state2 = reduce(go.apply_instruction_list, instructions, state)
+        state2 = reduce(go.apply_instruction, instructions, state)
         
         compare = np.allclose(state1,state2)
         
