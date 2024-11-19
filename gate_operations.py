@@ -1,5 +1,6 @@
 import numpy as np
 import qutip as qt
+import random
 
 
 # MAIN FUNCTIONS
@@ -281,7 +282,6 @@ def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
     return CNOT
 
 
-
 def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
     """
     Constructs an arbitrary SWAP gate matrix representation
@@ -442,6 +442,59 @@ class instruction:
         
         self = instruction(gate,qubit)
         return self
+    
+    
+    def random_instruction(qubit_amount: int = 1):
+        
+        
+        choice = random.randint(0,11)
+        
+        match choice:
+            case 0:
+                self = instruction("H",[random.randint(1,qubit_amount)])
+            case 1:
+                self = instruction("X",[random.randint(1,qubit_amount)])
+            case 2:
+                self = instruction("Y",[random.randint(1,qubit_amount)])
+            case 3:
+                self = instruction("Z",[random.randint(1,qubit_amount)])
+            case 4:
+                self = instruction("S",[random.randint(1,qubit_amount)])
+            case 5:
+                self = instruction("T",[random.randint(1,qubit_amount)])
+            case 6:
+                self = instruction("Rx",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 7:
+                self = instruction("Ry",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 8:
+                self = instruction("Rz",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 9:
+                self = instruction("R",[random.randint(1,qubit_amount)], random.random()*2*np.pi, np.array([random.random()-0.5,random.random()-0.5,random.random()-0.5]))
+            case 10:
+                if qubit_amount < 2:
+                    return instruction.random_instruction()
+                
+                control_qubit = random.randint(1,qubit_amount)
+                target_qubit = control_qubit
+                while target_qubit == control_qubit:
+                    target_qubit = random.randint(1,qubit_amount)
+                
+                self = instruction("CNOT",[control_qubit,target_qubit])
+            case 11:
+                if qubit_amount < 2:
+                    return instruction.random_instruction()
+                
+                qubit1 = random.randint(1,qubit_amount)
+                qubit2 = qubit1
+                while qubit1 == qubit2:
+                    qubit2 = random.randint(1,qubit_amount)
+                
+                self = instruction("SWAP",[qubit1,qubit2])
+             
+        return self
+             
+    
+                
             
 
 def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount: int = None):
@@ -509,9 +562,9 @@ def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount:
 def create_instruction_list(instruction_list: list):
     """
     Transforms a list of instruction lists (["R",[2],np.pi,np.array([1,0,0])]) into a list of instruction class objects
-
+    
         instruction_list: list of instruction lists
-
+        
     Returns:
         list: list of instruction objects
     """
@@ -522,3 +575,5 @@ def create_instruction_list(instruction_list: list):
         new_list.append(instruction.create_from_list(instr))
         
     return new_list
+
+
