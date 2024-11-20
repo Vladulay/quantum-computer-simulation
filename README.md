@@ -13,7 +13,7 @@ To visualize single qubit states between any transformations one ca use the func
 There are several ways to go about applying gate operations. 
 - One can directly call the function _gate_operation_ and specify the state and gate, to return a transformed state.
 - One can use the _apply_instruction_ function. For this, one has to create an instance of the _instruction_ class and define gate and target qubits, which are properties of this object.
-- One can apply a list of instructions with the _reduce_ function from the _functools_ package and _apply_instruction_list_. This is the simplest way to quickly apply large circuits.
+- One can apply a list of instructions with the _reduce_ function from the _functools_ package and _apply_instruction_. This is the simplest way to quickly apply large circuits. 
 
 ### Instruction Class
 Has four properties, which one can define in a list in this order to use the instructional list syntax
@@ -37,6 +37,11 @@ The following instructions are possible:
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
 
 ## Change Log
+20.11.2024
++ Improved instruction class
++ Added perfomance tests for numpy arrays to jupyter notebook
++ Added scipy csr matrix compatability to gate_operation function (more to come)
+
 12.11.2024
 + Added tutorial jupyter notebook
 + Added instructional syntax
