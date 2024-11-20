@@ -1,21 +1,47 @@
 import numpy as np
 import qutip as qt
 import random
+from scipy.sparse import csr_matrix
 
 
 # MAIN FUNCTIONS
 
 # vector v and gate G
-def gate_operation (input_state: np.array, gate: np.array):
-    # check if unitary
-    if not unitary_check(gate):
-        print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
-        return input_state
-    
-    # multiply  out = G*v
-    output_qubit = np.matmul(gate, input_state)
+def gate_operation (input_state, gate):
+    """
+    Computes a gate multiplication. Takes in either both as 'np.ndarray' or
+    both as 'scipy.sparse.csr_matrix'
 
-    return output_qubit
+        input_state: state to which to apply the gate
+        gate: gate which to apply
+
+    Returns:
+        np.array / scipy.sparse.csr_matrix: state after gate application
+    """
+    
+    if type(input_state) == np.ndarray and type(gate) == np.ndarray:
+    
+        # check if unitary
+        if not unitary_check(gate):
+            print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
+            return input_state
+        
+        # multiply  out = G*v
+        output_qubit = np.matmul(gate, input_state)
+    
+        return output_qubit 
+    
+    elif type(input_state) == csr_matrix and type(gate) == csr_matrix:
+        
+        # multiply  out = G*v
+        output_qubit  = gate @ input_state.reshape(-1, 1)
+    
+        return output_qubit 
+    
+    else:
+        print("Error: unsupported typing in gate operation.")
+        
+        return input_state
 
 
 def plot_bloch_state(state: np.array,  bloch_sphere: qt.Bloch, color: str = "royalblue"):

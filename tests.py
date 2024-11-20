@@ -3,6 +3,9 @@ import gate_operations as go
 import random
 import numpy as np
 from functools import reduce
+from scipy.sparse import lil_array
+from scipy.sparse import csr_matrix
+import scipy.sparse
 
 class TestGates(unittest.TestCase):
 
@@ -495,6 +498,34 @@ class TestGates(unittest.TestCase):
         compare = np.allclose(state1,state2)
         
         self.assertTrue(compare)
+    
+    def test_csr_matrix_gate_operation(self):
+        qubit_amount = random.randint(1, 6)
+
+        # state prep |0000...0000〉
+        state = np.zeros((2**qubit_amount,))
+        state[0] = 1
+        
+        # non sparse
+        Y = go.single_qubit_gate_to_full_gate(go.Y(), qubit_amount, random.randint(1, qubit_amount))
+        
+        # sparse
+        Y_sparse = csr_matrix(Y)
+        state_sparse = csr_matrix(state.T)
+
+        sol1 = go.gate_operation(state, Y)
+
+        sol2 = go.gate_operation(state_sparse, Y_sparse)
+        
+        #convert sparse back 
+        sol2 = sol2.toarray().T
+    
+        
+        compare = np.allclose(sol1,sol2)
+        
+        self.assertTrue(compare)
+
+
     
 
 
