@@ -2,12 +2,15 @@ import numpy as np
 import qutip as qt
 import random
 from scipy.sparse import csr_matrix
+from scipy.sparse import kron
+
+sparse_advantage = 9
 
 
 # MAIN FUNCTIONS
 
 # vector v and gate G
-def gate_operation (input_state, gate):
+def gate_operation (input_state, gate, qubit_amount: int = 1):
     """
     Computes a gate multiplication. Takes in either both as 'np.ndarray' or
     both as 'scipy.sparse.csr_matrix'
@@ -20,6 +23,18 @@ def gate_operation (input_state, gate):
     """
     
     if type(input_state) == np.ndarray and type(gate) == np.ndarray:
+    
+        if qubit_amount >= sparse_advantage:
+            gate = csr_matrix(gate)     
+            input_state = csr_matrix(input_state)
+        
+        
+            # multiply  out = G*v
+            output_qubit  = gate @ input_state.reshape(-1, 1)
+            
+            output_qubit = output_qubit.toarray().T
+            
+            return output_qubit 
     
         # check if unitary
         if not unitary_check(gate):
@@ -145,7 +160,7 @@ def tensor_states(state1: np.array, state2: np.array):
     return new_state
 
 
-def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_index: int): 
+def single_qubit_gate_to_full_gate(gate ,qubit_amount: int, qubit_index: int): 
     single_qubit_gates = []
     index = 0
     while index < qubit_amount:
@@ -156,16 +171,45 @@ def single_qubit_gate_to_full_gate(gate: np.array ,qubit_amount: int, qubit_inde
         
         index += 1
     
-    new_gate = single_qubit_gates.pop()
+    if type(gate) == np.ndarray:
+        
+        #if qubit_amount >= 8:
+        
+        new_gate = csr_matrix(single_qubit_gates.pop())
+        
+        while len(single_qubit_gates) > 0:
+            new_gate = kron(csr_matrix(single_qubit_gates.pop()) , new_gate)
+            
+        new_gate = csr_matrix(new_gate).toarray()
+            
+        return new_gate
+        
+        # new_gate = single_qubit_gates.pop()
+        
+        # while len(single_qubit_gates) > 0:
+        #     new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+        
+        
+        # return new_gate
     
-    while len(single_qubit_gates) > 0:
-        new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+    elif type(gate) == csr_matrix:
+        
+        new_gate = csr_matrix(single_qubit_gates.pop())
+    
+        while len(single_qubit_gates) > 0:
+            new_gate = kron(csr_matrix(single_qubit_gates.pop()) , new_gate)
+        
+        new_gate = csr_matrix(new_gate)
+        
+        return new_gate
+    
+    else:
+        print("Error: unsupported typing in gate operation.")
+        
+        return gate
     
     
-    return new_gate
-
-
-def multi_single_qubit_gates_to_full_gate(gate: np.array ,qubit_amount: int, qubit_indices: []): 
+def multi_single_qubit_gates_to_full_gate(gate ,qubit_amount: int, qubit_indices: []): 
     single_qubit_gates = []
     
     index = 0
@@ -177,13 +221,42 @@ def multi_single_qubit_gates_to_full_gate(gate: np.array ,qubit_amount: int, qub
         
         index += 1
     
-    new_gate = single_qubit_gates.pop()
+    if type(gate) == np.ndarray:
+        if qubit_amount >= sparse_advantage:
+        
+            new_gate = csr_matrix(single_qubit_gates.pop())
+            
+            while len(single_qubit_gates) > 0:
+                new_gate = kron(csr_matrix(single_qubit_gates.pop()) , new_gate)
+                
+            new_gate = csr_matrix(new_gate)
+                
+            new_gate = csr_matrix(new_gate).toarray()
+                
+            return new_gate
+        
+        new_gate = single_qubit_gates.pop()
+        
+        while len(single_qubit_gates) > 0:
+            new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+
+        return new_gate
     
-    while len(single_qubit_gates) > 0:
-        new_gate = np.kron(single_qubit_gates.pop(), new_gate)
+    elif type(gate) == csr_matrix:
+        new_gate = csr_matrix(single_qubit_gates.pop())
     
+        while len(single_qubit_gates) > 0:
+            new_gate = kron(csr_matrix(single_qubit_gates.pop()) , new_gate)
+        
+        new_gate = csr_matrix(new_gate)
+        
+        return new_gate
     
-    return new_gate
+    else:
+        print("Error: unsupported typing in gate operation.")
+        
+        return gate
+    
 
 
 
@@ -252,6 +325,131 @@ def R(direction: np.array ,angle: float):
     return np.cos(angle/2) * np.identity(2) - 1j * np.sin(angle/2) *( direction[0] * X() + direction[1] * Y() + direction[2] * Z())
 
 
+def CNOT_csr(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
+    """
+    Constructs an arbitrary CNOT gate matrix representation
+
+        qubit_amount: amount of qubits in the system
+        control_qubit_index: index of the control qubit
+        target_qubit_index: index of the target qubit
+
+    Returns:
+        scipy csr_matrix: correct CNOT gate matrix, dimensions (qubit_amount x qubit_amount)
+    """
+    
+    # Check for correct index stuctures
+    if control_qubit_index == target_qubit_index:
+        print("Error: target and control qubit cannot have same index. Skipping gate.")
+        return csr_matrix(np.identity(2**qubit_amount))
+    
+    if control_qubit_index > qubit_amount or target_qubit_index > qubit_amount:
+        print("Error: target or control qubit cannot have greater index then qubit amount. Skipping gate.")
+        return csr_matrix(np.identity(2**qubit_amount))
+    
+    # Prepare rightmost matrices of tensor product
+    leave_matrix = csr_matrix(np.identity(2))
+    flip_matrix = csr_matrix(np.identity(2))
+    
+    if control_qubit_index == qubit_amount:
+        leave_matrix = csr_matrix((np.array([1]), (np.array([0]), np.array([0]))), shape=(2, 2))  # |0><0|
+        flip_matrix = csr_matrix((np.array([1]), (np.array([1]), np.array([1]))), shape=(2, 2))  # |1><1|
+    
+    if target_qubit_index == qubit_amount:
+        flip_matrix = csr_matrix(X())
+    
+    # Compute tensor products
+    index = qubit_amount - 1
+    while index > 0:
+        if index == target_qubit_index:
+            leave_matrix = kron(csr_matrix(np.identity(2)),leave_matrix)
+            flip_matrix = kron(csr_matrix(X()) , flip_matrix)
+            
+        elif index == control_qubit_index:
+            leave_matrix = kron(csr_matrix((np.array([1]), (np.array([0]), np.array([0]))), shape=(2, 2)) , leave_matrix) # apply |0><0|
+            flip_matrix = kron(csr_matrix((np.array([1]), (np.array([1]), np.array([1]))), shape=(2, 2)) , flip_matrix)   # apply |1><1|
+        
+        else:
+            leave_matrix = kron(csr_matrix(np.identity(2)) , leave_matrix)
+            flip_matrix = kron(csr_matrix(np.identity(2)) , flip_matrix)
+        
+        index -= 1
+    
+    CNOT = leave_matrix + flip_matrix # generalized version of CNOT=(∣0⟩⟨0∣⊗I)+(∣1⟩⟨1∣⊗X)
+    
+    CNOT = csr_matrix(CNOT)
+    
+    return CNOT
+
+
+def SWAP_csr(qubit_amount: int, qubit1_index: int, qubit2_index: int):
+    """
+    Constructs an arbitrary SWAP gate matrix representation
+
+        qubit_amount: amount of qubits in the system
+        qubit1_index, qubit2_index: indices of the qubits one wants to swap
+
+    Returns:
+        scipy csr_matrix: correct SWAP gate matrix, dimensions (qubit_amount x qubit_amount)
+    """
+    
+    
+    # Check for correct index stuctures
+    if qubit1_index == qubit2_index:
+        print("Warning: Swaping qubits with same index is useless. Skipping gate.")
+        return csr_matrix(np.identity(2**qubit_amount)) 
+    
+    if qubit1_index > qubit_amount or qubit2_index > qubit_amount:
+        print("Error: a swap qubit index is out of range. Skipping gate.")
+        return csr_matrix(np.identity(2**qubit_amount)) 
+    
+    # sort indices by magnitude 1>2
+    if qubit1_index < qubit2_index:
+        temp = qubit1_index
+        qubit1_index = qubit2_index
+        qubit2_index = temp
+    
+    # Prepare rightmost matrices of tensor product
+    matrix_00 = csr_matrix(np.identity(2)) 
+    matrix_01 = csr_matrix(np.identity(2)) 
+    matrix_10 = csr_matrix(np.identity(2)) 
+    matrix_11 = csr_matrix(np.identity(2)) 
+    
+    if qubit1_index == qubit_amount:
+        matrix_00 = csr_matrix((np.array([1]), (np.array([0]), np.array([0]))), shape=(2, 2))  # |0><0|
+        matrix_01 = csr_matrix((np.array([1]), (np.array([0]), np.array([1]))), shape=(2, 2))  # |0><1|
+        matrix_10 = csr_matrix((np.array([1]), (np.array([1]), np.array([0]))), shape=(2, 2))  # |1><0|
+        matrix_11 = csr_matrix((np.array([1]), (np.array([1]), np.array([1]))), shape=(2, 2))  # |1><1|
+    
+    # Compute tensor products
+    index = qubit_amount - 1
+    while index > 0:
+        if index == qubit1_index:
+            matrix_00 = kron(csr_matrix((np.array([1]), (np.array([0]), np.array([0]))), shape=(2, 2)) , matrix_00)  # |0><0|
+            matrix_01 = kron(csr_matrix((np.array([1]), (np.array([0]), np.array([1]))), shape=(2, 2)) , matrix_01)  # |0><1|
+            matrix_10 = kron(csr_matrix((np.array([1]), (np.array([1]), np.array([0]))), shape=(2, 2)) , matrix_10)  # |1><0|
+            matrix_11 = kron(csr_matrix((np.array([1]), (np.array([1]), np.array([1]))), shape=(2, 2)) , matrix_11)  # |1><1|
+            
+        elif index == qubit2_index:
+            matrix_00 = kron(csr_matrix((np.array([1]), (np.array([0]), np.array([0]))), shape=(2, 2)) , matrix_00)  # |0><0|
+            matrix_01 = kron(csr_matrix((np.array([1]), (np.array([1]), np.array([0]))), shape=(2, 2)) , matrix_01)  # |1><0|
+            matrix_10 = kron(csr_matrix((np.array([1]), (np.array([0]), np.array([1]))), shape=(2, 2)) , matrix_10)  # |0><1|
+            matrix_11 = kron(csr_matrix((np.array([1]), (np.array([1]), np.array([1]))), shape=(2, 2)) , matrix_11)  # |1><1|
+        
+        else:
+            matrix_00 = kron(csr_matrix(np.identity(2)) , matrix_00)
+            matrix_01 = kron(csr_matrix(np.identity(2)) , matrix_01)
+            matrix_10 = kron(csr_matrix(np.identity(2)) , matrix_10)
+            matrix_11 = kron(csr_matrix(np.identity(2)) , matrix_11) 
+        
+        index -= 1
+    
+    SWAP = matrix_00 + matrix_01 + matrix_10 + matrix_11
+    
+    SWAP = csr_matrix(SWAP)
+    
+    return SWAP
+
+
 def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
     """
     Constructs an arbitrary CNOT gate matrix representation
@@ -264,6 +462,10 @@ def CNOT(qubit_amount: int, control_qubit_index: int, target_qubit_index: int):
         np.array: correct CNOT gate matrix, dimensions (qubit_amount x qubit_amount)
     """
     
+    # sparse advantage regime
+    if qubit_amount >= sparse_advantage:
+        CNOT = CNOT_csr(qubit_amount, control_qubit_index, target_qubit_index).toarray()
+        return CNOT
     
     # Check for correct index stuctures
     if control_qubit_index == target_qubit_index:
@@ -319,6 +521,10 @@ def SWAP(qubit_amount: int, qubit1_index: int, qubit2_index: int):
         np.array: correct SWAP gate matrix, dimensions (qubit_amount x qubit_amount)
     """
     
+    # sparse advantage regime
+    if qubit_amount >= sparse_advantage:
+        SWAP = SWAP_csr(qubit_amount, qubit1_index, qubit2_index).toarray()
+        return SWAP
     
     # Check for correct index stuctures
     if qubit1_index == qubit2_index:
@@ -426,6 +632,9 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
     return gate
 
 
+
+
+
 class instruction:
     def __init__(self, gate=None, qubit=None, angle=None, direction=None):
         if gate is None:
@@ -471,8 +680,6 @@ class instruction:
     
     
     def random_instruction(qubit_amount: int = 1):
-        
-        
         choice = random.randint(0,11)
         
         match choice:
@@ -518,12 +725,107 @@ class instruction:
                 self = instruction("SWAP",[qubit1,qubit2])
              
         return self
+    
+    
+    def random_single_qubit_instruction(qubit_amount: int = 1):
+        choice = random.randint(0,9)
+        
+        match choice:
+            case 0:
+                self = instruction("H",[random.randint(1,qubit_amount)])
+            case 1:
+                self = instruction("X",[random.randint(1,qubit_amount)])
+            case 2:
+                self = instruction("Y",[random.randint(1,qubit_amount)])
+            case 3:
+                self = instruction("Z",[random.randint(1,qubit_amount)])
+            case 4:
+                self = instruction("S",[random.randint(1,qubit_amount)])
+            case 5:
+                self = instruction("T",[random.randint(1,qubit_amount)])
+            case 6:
+                self = instruction("Rx",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 7:
+                self = instruction("Ry",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 8:
+                self = instruction("Rz",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 9:
+                self = instruction("R",[random.randint(1,qubit_amount)], random.random()*2*np.pi, np.array([random.random()-0.5,random.random()-0.5,random.random()-0.5]))
              
+        return self
+    
+    
+    def chunked_random_instruction(qubit_amount: int = 1, chunk_size: int = 3):
+        choice = random.randint(0,11)
+        
+        match choice:
+            case 0:
+                self = instruction("H",[random.randint(1,qubit_amount)])
+            case 1:
+                self = instruction("X",[random.randint(1,qubit_amount)])
+            case 2:
+                self = instruction("Y",[random.randint(1,qubit_amount)])
+            case 3:
+                self = instruction("Z",[random.randint(1,qubit_amount)])
+            case 4:
+                self = instruction("S",[random.randint(1,qubit_amount)])
+            case 5:
+                self = instruction("T",[random.randint(1,qubit_amount)])
+            case 6:
+                self = instruction("Rx",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 7:
+                self = instruction("Ry",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 8:
+                self = instruction("Rz",[random.randint(1,qubit_amount)], random.random()*2*np.pi)
+            case 9:
+                self = instruction("R",[random.randint(1,qubit_amount)], random.random()*2*np.pi, np.array([random.random()-0.5,random.random()-0.5,random.random()-0.5]))
+            case 10:
+                if qubit_amount < 2:
+                    return instruction.random_instruction()
+                
+                control_qubit = random.randint(1, qubit_amount)
+                
+                base = control_qubit - control_qubit % chunk_size
+                
+                if base == control_qubit and base != 1:
+                    base = base - chunk_size
+                
+                target_qubit = control_qubit
+                if base + 1 != qubit_amount:
+                    while target_qubit == control_qubit or target_qubit > qubit_amount:
+                        target_qubit = base + random.randint(1, chunk_size)
+                
+                if target_qubit == control_qubit:
+                    return instruction.random_instruction()
+                
+                self = instruction("CNOT",[control_qubit,target_qubit])
+            case 11:
+                if qubit_amount < 2:
+                    return instruction.random_instruction()
+                
+                qubit1 = random.randint(1, qubit_amount)
+
+                base = qubit1 - qubit1 % chunk_size
+
+                if base == qubit1 and base != 1:
+                    base = base - chunk_size
+
+                qubit2 = qubit1
+                if base + 1 != qubit_amount:
+                    while qubit2 == qubit1 or qubit2 > qubit_amount:
+                        qubit2 = base + random.randint(1, chunk_size)
+                
+                if qubit1 == qubit2:
+                    return instruction.random_instruction()
+                
+                self = instruction("SWAP",[qubit1,qubit2])
+             
+        return self
     
                 
             
 
-def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount: int = None):
+def apply_instruction(state ,instruction: instruction(), qubit_amount: int = None):
     """
     Applies a gate to a state, defined by an instruction class object.
 
@@ -532,57 +834,112 @@ def apply_instruction(state: np.array ,instruction: instruction(), qubit_amount:
         qubit_amount: amount of qubits in the system
 
     Returns:
-        np.array: state after application
+        np.array / scipy.csr_matrix: state after application
     """
     
     if qubit_amount is None:
         qubit_amount = round(np.log2(len(state)))
     
-    match instruction.gate:
-        case "H":
-            state = gate_operation(state, multi_single_qubit_gates_to_full_gate(H(), qubit_amount, instruction.qubit))
-            return state
-        case "X":
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(X(), qubit_amount, instruction.qubit))
-             return state
-        case "Y":
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Y(), qubit_amount, instruction.qubit))
-             return state
-        case "Z":
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Z(), qubit_amount, instruction.qubit))
-             return state
-        case "S":
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(S(), qubit_amount, instruction.qubit))
-             return state
-        case "T":
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(T(), qubit_amount, instruction.qubit))
-             return state
-        case "Rx":
-             gate = R_x(instruction.angle)
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
-             return state
-        case "Ry":
-             gate = R_y(instruction.angle)
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
-             return state
-        case "Rz":
-             gate = R_z(instruction.angle)
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
-             return state
-        case "R":
-             gate = R(instruction.direction, instruction.angle)
-             state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit))
-             return state
-        case "CNOT":
-             gate = CNOT(qubit_amount, instruction.qubit[0], instruction.qubit[1])
-             state = gate_operation(state, gate)
-             return state
-        case "SWAP":
-             gate = SWAP(qubit_amount, instruction.qubit[0], instruction.qubit[1])
-             state = gate_operation(state, gate)
-             return state
-        case _:
-             return state
+    if type(state) == np.ndarray:
+        match instruction.gate:
+            case "H":
+                state = gate_operation(state, multi_single_qubit_gates_to_full_gate(H(), qubit_amount, instruction.qubit), qubit_amount)
+                return state
+            case "X":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(X(), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Y":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Y(), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Z":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(Z(), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "S":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(S(), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "T":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(T(), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Rx":
+                 gate = R_x(instruction.angle)
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Ry":
+                 gate = R_y(instruction.angle)
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Rz":
+                 gate = R_z(instruction.angle)
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "R":
+                 gate = R(instruction.direction, instruction.angle)
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "CNOT":
+                 gate = CNOT(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+                 state = gate_operation(state, gate, qubit_amount)
+                 return state
+            case "SWAP":
+                 gate = SWAP(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+                 state = gate_operation(state, gate, qubit_amount)
+                 return state
+            case _:
+                 return state
+    
+    elif type(state) == csr_matrix:
+        match instruction.gate:
+            case "H":
+                state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(H()) , qubit_amount, instruction.qubit), qubit_amount)
+                return state
+            case "X":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(X()), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Y":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(Y()), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Z":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(Z()), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "S":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(S()), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "T":
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(csr_matrix(T()), qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Rx":
+                 gate = csr_matrix(R_x(instruction.angle))
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Ry":
+                 gate = csr_matrix(R_y(instruction.angle))
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "Rz":
+                 gate = csr_matrix(R_z(instruction.angle))
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "R":
+                 gate = csr_matrix(R(instruction.direction, instruction.angle))
+                 state = gate_operation(state, multi_single_qubit_gates_to_full_gate(gate, qubit_amount, instruction.qubit), qubit_amount)
+                 return state
+            case "CNOT":
+                 gate = CNOT_csr(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+                 state = gate_operation(state, gate, qubit_amount)
+                 return state
+            case "SWAP":
+                 gate = SWAP_csr(qubit_amount, instruction.qubit[0], instruction.qubit[1])
+                 state = gate_operation(state, gate, qubit_amount)
+                 return state
+            case _:
+                 return state
+    
+    else:
+        print("Error: unsupported typing in gate operation.")
+        
+        return state
+    
+    
 
 
 def create_instruction_list(instruction_list: list):
