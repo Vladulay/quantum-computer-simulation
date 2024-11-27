@@ -37,6 +37,12 @@ The following instructions are possible:
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
 
 ## Change Log
+27.11.2024
++ Added scipy sparse compatability for instructional syntax
++ Code speedup for dense matrices through internal use of sparse matrices
++ Added benchmark data inside notebook 
++ Some measurement experimentation in the notebook
+
 20.11.2024
 + Improved instruction class
 + Added perfomance tests for numpy arrays to jupyter notebook
