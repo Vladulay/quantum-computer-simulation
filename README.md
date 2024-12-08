@@ -1,12 +1,16 @@
-# quantum-computer-simulation
+# Quantum Computing Simulation
 
-Here we develope a framework for quantum simulation
+Here we develop a framework for quantum simulation. Apply quantum circuits to pure states and perform measurements.
 
+## Features
+- Gate application via instruction list syntax
+- Measurements in arbitary bases via projectors (of all states only)
+- Supports pure states only
 
 ## How to use
 The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. 
 
-### Single Qubit State Vsualizer
+### Single Qubit State Visualizer
 To visualize single qubit states between any transformations one ca use the function _plot_bloch_state_.
 
 ### Gate Operations
@@ -36,7 +40,14 @@ The following instructions are possible:
 - ["CNOT",[2,1]] - apply CNOT gate with the control qubit 2 and the target qubit 1
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
 
+### Measurements
+A state can be measured a given amount of times via the _measure_projective_ function in any arbitrary projector basis. The standard bases can be produced by the functions _P_x_, _P_y_ and _P_z_. The computational basis can be used directly via the _measure_computational_ function.
+
 ## Change Log
+08.12.2024
++ Added measurement framework
++ **Finished basic pure state framework**
+
 27.11.2024
 + Added scipy sparse compatability for instructional syntax
 + Code speedup for dense matrices through internal use of sparse matrices
