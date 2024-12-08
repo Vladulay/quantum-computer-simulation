@@ -3,6 +3,9 @@ import qutip as qt
 import random
 from scipy.sparse import csr_matrix
 from scipy.sparse import kron
+import itertools
+
+import matplotlib.pyplot as plt
 
 sparse_advantage = 9
 
@@ -959,4 +962,181 @@ def create_instruction_list(instruction_list: list):
         
     return new_list
 
+
+
+
+
+
+
+
+
+# Projectors
+
+def _create_multi_qubit_projector_list(qubit_amount, P1, P2):
+    """
+    Generate all possible tensor products for matrices P1 and P2 based on bit patterns of length n.
+    
+    Parameters:
+        P1 (numpy.ndarray): First matrix.
+        P2 (numpy.ndarray): Second matrix.
+        n (int): Length of bit patterns.
+    
+    Returns:
+        dict: A dictionary where keys are bit patterns (as strings) and values are the resulting tensor products.
+    """
+    # Generate all bit patterns of length n
+    bit_patterns = list(itertools.product([0, 1], repeat=qubit_amount))
+    result = []
+    
+    for bits in bit_patterns:
+        # Start with the first matrix in the tensor product
+        tensor_product = P1 if bits[0] == 0 else P2
+        # Iterate through the remaining bits to compute the tensor product
+        for bit in bits[1:]:
+            tensor_product = np.kron(tensor_product, P1 if bit == 0 else P2)
+        # Store the result
+        result.append(tensor_product)
+    
+    return result
+
+
+def P_x(qubit_amount: int = 1):
+    P_plus_x = np.array([[1, 1], [1, 1]]) / 2  # |+><+|
+    P_minus_x = np.array([[1, -1], [-1, 1]]) / 2  # |-><-|
+    
+    return _create_multi_qubit_projector_list(qubit_amount, P_plus_x, P_minus_x)
+
+
+def P_y(qubit_amount: int = 1):
+    P_plus_y = np.array([[1, -1j], [1j, 1]]) / 2  # |i+><i+|
+    P_minus_y = np.array([[1, 1j], [-1j, 1]]) / 2  # |i-><i-|
+    
+    return _create_multi_qubit_projector_list(qubit_amount, P_plus_y, P_minus_y)
+
+
+def P_z(qubit_amount: int = 1):
+    P_0 = np.array([[0, 0], [0, 1]])  # |1><1|
+    P_1 = np.array([[1, 0], [0, 0]])  # |0><0|
+    
+    return _create_multi_qubit_projector_list(qubit_amount, P_1, P_0)
+
+
+
+
+
+
+
+
+
+
+
+# Measurement
+def measure_projective(state, qubit_amount: int = 1, num_measurements: int = 1, projectors: list = None, return_frequencies: bool = True):
+    """
+    Perform measurements using a set of projectors.
+    
+    Args:
+        state (np.ndarray): Quantum state to measure.
+        qubit_amount (int): amount of qubits of the state
+        num_measurements (int): Number of measurements.
+        projectors (list of np.ndarray): List of projectors {P_i}.
+        return_frequencies (bool): Whether to return frequencies or raw outcomes.
+    
+    Returns:
+        dict: Frequencies of outcomes or amount of outcomes.
+    """
+    if projectors is None:
+        measure_computational(state,qubit_amount,num_measurements,return_frequencies)
+        
+    
+    # Normalize state
+    state = state / np.linalg.norm(state)
+    
+    # Compute probabilities
+    probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    
+    # Simulate measurement outcomes
+    outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
+    
+    if return_frequencies:
+        frequencies = {i: np.sum(outcomes == i) / num_measurements for i in range(len(projectors))}
+        return frequencies
+    else:
+        measurements = {i: np.sum(outcomes == i) for i in range(len(projectors))}
+        return measurements
+
+
+def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 1, return_frequencies: bool = True):
+    """
+    Perform measurements in the computational basis (Z-basis).
+    
+    Args:
+        state (np.ndarray): Quantum state to measure.
+        qubit_amount (int): amount of qubits of the state
+        num_measurements (int): Number of measurements.
+        return_frequencies (bool): Whether to return frequencies or raw outcomes.
+    
+    Returns:
+        dict: Frequencies of outcomes or amount of outcomes.
+    """
+    
+    # Define computational basis projectors
+    projectors = P_z(qubit_amount)
+    
+    # Normalize state
+    state = state / np.linalg.norm(state)
+    
+    # Compute probabilities
+    probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    
+    # Simulate measurement outcomes
+    outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
+    
+    if return_frequencies:
+        frequencies = {i: np.sum(outcomes == i) / num_measurements for i in range(len(projectors))}
+        
+        # Find the maximum key to determine the number of bits required
+        max_key = max(frequencies.keys())
+        num_bits = max_key.bit_length()
+
+        # Convert keys to bitstrings and create a new dictionary
+        bitstring_dict = {format(key, f'0{num_bits}b'): value for key, value in frequencies.items()}
+        
+        return bitstring_dict
+    else:
+        measurements = {i: np.sum(outcomes == i) for i in range(len(projectors))}
+        
+        # Find the maximum key to determine the number of bits required
+        max_key = max(measurements.keys())
+        num_bits = max_key.bit_length()
+
+        # Convert keys to bitstrings and create a new dictionary
+        bitstring_dict = {format(key, f'0{num_bits}b'): value for key, value in measurements.items()}
+        
+        return bitstring_dict
+
+
+def plot_measurement(measurement_dict, title="Measurement Outcomes", y_label = "frequencies / measurement amount",x_label = "measurement outcomes"):
+    """
+    Plot the frequencies of measurement outcomes as a bar plot.
+    
+    Args:
+        frequencies (dict): Frequencies of outcomes.
+        title (str): Title of the plot.
+    """
+    labels = list(measurement_dict.keys())
+    values = list(measurement_dict.values())
+    
+    plt.figure(figsize=(10, 6))
+    plt.bar(labels, values)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    
+    # Set x-axis ticks to integers only
+    plt.xticks(ticks=range(len(labels)), labels=labels)
+    
+    plt.show()
+    
+    return plt
 
