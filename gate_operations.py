@@ -65,7 +65,20 @@ def gate_operation (input_state, gate, qubit_amount: int = 1):
 def plot_bloch_state(state: np.array,  bloch_sphere: qt.Bloch, color: str = "royalblue"):
     colors = [color]
     
-    bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(state)), colors)
+    if state.shape == (2,):
+        # pure state
+        
+        bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(state)), colors)
+    else:
+        # mixed state
+        x = state[0,1] + state[1,0]
+        y = (state[0,1] - state[1,0]) / 1j
+        z = 2 *state[0,0] - 1
+        
+        bloch_sphere_vector = np.array([x,y,z])
+        
+        bloch_sphere.add_vectors(bloch_sphere_vector, colors)
+        
 
 
 def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sphere: qt.Bloch, color_in: str, color_out: str):
