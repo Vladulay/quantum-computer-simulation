@@ -883,5 +883,86 @@ class TestCsrGates(unittest.TestCase):
         self.assertTrue(compare)
 
 
+class TestMeasurements(unittest.TestCase):
+
+    def test_simple_states(self):
+        state = np.array([1,0,0,0,0,0,0,0])
+        
+        result = go.measure_projective(state,3,100000,go.P_z(3))
+        
+        self.assertTrue(np.allclose(result[0], 1))
+        
+        result = go.measure_projective(state,3,100000,go.P_x(3))
+        
+        self.assertTrue(np.allclose(result[0], 1/(2**3),0.05))
+        
+        result = go.measure_projective(state,3,100000,go.P_y(3))
+        
+        self.assertTrue(np.allclose(result[0], 1/(2**3),0.05))
+    
+    
+    def test_mixed_states(self):
+        state = np.array([1,0,0,0,0,0,0,0])
+        state = np.outer(state, state.conj())
+        
+        result = go.measure_projective(state,3,100000,go.P_z(3))
+        
+        self.assertTrue(np.allclose(result[0], 1))
+        
+        result = go.measure_projective(state,3,100000,go.P_x(3))
+        
+        self.assertTrue(np.allclose(result[0], 1/(2**3),0.05))
+        
+        result = go.measure_projective(state,3,100000,go.P_y(3))
+        
+        self.assertTrue(np.allclose(result[0], 1/(2**3),0.05))
+
+
+class TestMixedStates(unittest.TestCase):
+
+    def test_compare_evolution_via_gate_operation(self):
+        pure_state = np.array([1,0,0,0,0,0,0,0])
+        mixed_state = np.outer(pure_state, pure_state.conj())
+        
+        instructions = go.create_instruction_list([["H",[1]],
+                                                   ["X",[2]]])
+        
+        pure_state =  reduce(go.apply_instruction, instructions, pure_state)
+        
+        mixed_state = go.gate_operation(mixed_state, go.single_qubit_gate_to_full_gate(go.H(), 3, 1), 3)
+        mixed_state = go.gate_operation(mixed_state, go.single_qubit_gate_to_full_gate(go.X(), 3, 2), 3)
+        
+        new_mixed_state = np.outer(pure_state, pure_state.conj())
+        
+        compare = np.allclose(mixed_state, new_mixed_state)
+                
+        self.assertTrue(compare)
+        
+    def test_compare_evolution_via_instuction(self):
+        pure_state = np.array([1,0,0,0,0,0,0,0])
+        mixed_state = np.outer(pure_state, pure_state.conj())
+        
+        instructions = go.create_instruction_list([["H",[1]],
+                                                   ["X",[2]],
+                                                   ["Rx",[2],np.pi],
+                                                   ["CNOT",[2,1]],
+                                                   ["R",[3],np.pi,np.array([0,1,0])],
+                                                   ["T",[1,2,3]]])
+        
+        pure_state =  reduce(go.apply_instruction, instructions, pure_state)
+        
+        mixed_state = reduce(go.apply_instruction, instructions, mixed_state)
+        
+        new_mixed_state = np.outer(pure_state, pure_state.conj())
+        
+        compare = np.allclose(mixed_state, new_mixed_state)
+                
+        self.assertTrue(compare)
+    
+
+    
+    
+    
+
 if __name__ == '__main__':
     unittest.main()

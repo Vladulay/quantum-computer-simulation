@@ -25,50 +25,87 @@ def gate_operation (input_state, gate, qubit_amount: int = 1):
         np.array / scipy.sparse.csr_matrix: state after gate application
     """
     
+    # dense matrices
     if type(input_state) == np.ndarray and type(gate) == np.ndarray:
     
-        if qubit_amount >= sparse_advantage:
-            gate = csr_matrix(gate)     
-            input_state = csr_matrix(input_state)
-        
-        
-            # multiply  out = G*v
-            output_qubit  = gate @ input_state.reshape(-1, 1)
-            
-            output_qubit = output_qubit.toarray().T
-            
-            return output_qubit 
+        return _dense_gate_operation(input_state, gate, qubit_amount) 
     
-        # check if unitary
-        if not unitary_check(gate):
-            print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
-            return input_state
-        
-        # multiply  out = G*v
-        output_qubit = np.matmul(gate, input_state)
-    
-        return output_qubit 
-    
+    # sparse matrices
     elif type(input_state) == csr_matrix and type(gate) == csr_matrix:
         
-        # multiply  out = G*v
-        output_qubit  = gate @ input_state.reshape(-1, 1)
+        output_state = None
+        
+        # pure state 
+        if len(input_state.shape) == 1 or 1 in input_state.shape:
+            output_state  = gate @ input_state.reshape(-1, 1)
+            
+        # mixed state (NOT WORKING YET)
+        else:
+            output_state  = gate @ input_state @ gate.conj().T
     
-        return output_qubit 
+        return output_state
     
+    # unsupported type
     else:
         print("Error: unsupported typing in gate operation.")
         
         return input_state
 
 
+def _dense_gate_operation (input_state, gate, qubit_amount: int = 1):
+    # pure states
+    if len(input_state.shape) == 1 or 1 in input_state.shape:
+        return _pure_gate_operation(input_state, gate, qubit_amount)
+    
+    # mixed states
+    else: 
+        return _mixed_gate_operation(input_state, gate, qubit_amount)
+
+
+def _pure_gate_operation (input_state, gate, qubit_amount: int = 1):
+    if qubit_amount >= sparse_advantage:
+        gate = csr_matrix(gate)     
+        input_state = csr_matrix(input_state)
+        
+        
+        # multiply  out = G*v
+        output_qubit  = gate @ input_state.reshape(-1, 1)
+            
+        output_qubit = output_qubit.toarray().T
+            
+        return output_qubit 
+    
+    # check if unitary
+    if not unitary_check(gate):
+        print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
+        return input_state
+        
+    # multiply  out = G*v
+    output_state = np.matmul(gate, input_state)
+    
+    return output_state
+
+
+def _mixed_gate_operation (input_state, gate, qubit_amount: int = 1):
+    # check if unitary
+    if not unitary_check(gate):
+        print("Error: Gate " + str(gate) + " is not a unitary. Skipping gate.")
+        return input_state
+        
+    # multiply  out = G*v
+    output_state = gate @ input_state @ gate.conj().T
+    
+    return output_state
+
+
 def plot_bloch_state(state: np.array,  bloch_sphere: qt.Bloch, color: str = "royalblue"):
     colors = [color]
     
+    # pure state
     if state.shape == (2,):
-        # pure state
-        
         bloch_sphere.add_vectors(spherical_to_cartesian(transform_to_bloch_vector(state)), colors)
+        
+    # mixed state
     else:
         # mixed state
         x = state[0,1] + state[1,0]
@@ -79,7 +116,6 @@ def plot_bloch_state(state: np.array,  bloch_sphere: qt.Bloch, color: str = "roy
         
         bloch_sphere.add_vectors(bloch_sphere_vector, colors)
         
-
 
 def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sphere: qt.Bloch, color_in: str, color_out: str):
     # plot of in state
@@ -103,6 +139,15 @@ def plotted_single_qubit_operation(in_state: np.array, gate: np.array, bloch_sph
 # HELPERS
 
 def unitary_check(matrix: np.array):
+    """
+    Check a np.ndarray for unitarity
+
+        matrix: np.ndarray
+
+    Returns:
+        bool
+    """
+    
     shape = matrix.shape
     
     # check if square matrix
@@ -119,6 +164,15 @@ def unitary_check(matrix: np.array):
 
 
 def normalization_check(vector: np.array):
+    """
+    Normalizes a pure state
+
+        vector: np.ndarray state
+
+    Returns:
+        np.ndarray: normalized state
+    """
+    
     length = np.linalg.norm(vector)
     if length != 1:
         #print("State is not normalized. Correcting...")
@@ -152,28 +206,6 @@ def spherical_to_cartesian(vector_sph: np.array):
     cartesian_vector = np.array([x,y,z])
     
     return cartesian_vector
-
-
-def tensor_states(state1: np.array, state2: np.array):
-    state_length = state1.shape[0]*state2.shape[0]
-    
-    new_state = np.zeros((state_length,))
-    
-    state_index = 0
-    state1_index = 0
-    while state1_index < state1.shape[0]:
-        state2_index = 0
-        while state2_index < state2.shape[0]:
-            
-            new_state[state_index] = state1[state1_index] * state2[state2_index]
-            
-            state2_index += 1
-            state_index += 1
-        state1_index += 1
-
-        
-
-    return new_state
 
 
 def single_qubit_gate_to_full_gate(gate ,qubit_amount: int, qubit_index: int): 
@@ -651,6 +683,9 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
 
 
 
+
+# Instruction syntax
+
 class instruction:
     def __init__(self, gate=None, qubit=None, angle=None, direction=None):
         if gate is None:
@@ -838,8 +873,7 @@ class instruction:
              
         return self
     
-                
-            
+     
 
 def apply_instruction(state ,instruction: instruction(), qubit_amount: int = None):
     """
@@ -985,7 +1019,7 @@ def create_instruction_list(instruction_list: list):
 
 # Projectors
 
-def _create_multi_qubit_projector_list(qubit_amount, P1, P2):
+def create_multi_qubit_projector_list(qubit_amount, P1, P2):
     """
     Generate all possible tensor products for matrices P1 and P2 based on bit patterns of length n.
     
@@ -1017,21 +1051,21 @@ def P_x(qubit_amount: int = 1):
     P_plus_x = np.array([[1, 1], [1, 1]]) / 2  # |+><+|
     P_minus_x = np.array([[1, -1], [-1, 1]]) / 2  # |-><-|
     
-    return _create_multi_qubit_projector_list(qubit_amount, P_plus_x, P_minus_x)
+    return create_multi_qubit_projector_list(qubit_amount, P_plus_x, P_minus_x)
 
 
 def P_y(qubit_amount: int = 1):
     P_plus_y = np.array([[1, -1j], [1j, 1]]) / 2  # |i+><i+|
     P_minus_y = np.array([[1, 1j], [-1j, 1]]) / 2  # |i-><i-|
     
-    return _create_multi_qubit_projector_list(qubit_amount, P_plus_y, P_minus_y)
+    return create_multi_qubit_projector_list(qubit_amount, P_plus_y, P_minus_y)
 
 
 def P_z(qubit_amount: int = 1):
     P_0 = np.array([[0, 0], [0, 1]])  # |1><1|
     P_1 = np.array([[1, 0], [0, 0]])  # |0><0|
     
-    return _create_multi_qubit_projector_list(qubit_amount, P_1, P_0)
+    return create_multi_qubit_projector_list(qubit_amount, P_1, P_0)
 
 
 
@@ -1066,7 +1100,12 @@ def measure_projective(state, qubit_amount: int = 1, num_measurements: int = 1, 
     state = state / np.linalg.norm(state)
     
     # Compute probabilities
-    probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    # pure states
+    if len(state.shape) == 1 or 1 in state.shape:
+        probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    # mixed states
+    else:
+        probabilities = [np.real(np.trace((P @ state))) for P in projectors]
     
     # Simulate measurement outcomes
     outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
@@ -1100,7 +1139,12 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
     state = state / np.linalg.norm(state)
     
     # Compute probabilities
-    probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    # pure states
+    if len(state.shape) == 1 or 1 in state.shape:
+        probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+    # mixed states
+    else:
+        probabilities = [np.real(np.trace((P @ state))) for P in projectors]
     
     # Simulate measurement outcomes
     outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
