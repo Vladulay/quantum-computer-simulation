@@ -47,6 +47,7 @@ A state can be measured a given amount of times via the _measure_projective_ fun
 08.12.2024
 + Added measurement framework
 + **Finished basic pure state framework**
++ added mixed state bloch plotting
 
 27.11.2024
 + Added scipy sparse compatability for instructional syntax
