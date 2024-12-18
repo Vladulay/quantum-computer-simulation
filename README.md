@@ -5,7 +5,8 @@ Here we develop a framework for quantum simulation. Apply quantum circuits to pu
 ## Features
 - Gate application via instruction list syntax
 - Measurements in arbitary bases via projectors (of all states only)
-- Supports pure states only
+- Supports both pure and mixed states
+- Supports sparse matrices for pure states
 
 ## How to use
 The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. 
@@ -44,6 +45,10 @@ The following instructions are possible:
 A state can be measured a given amount of times via the _measure_projective_ function in any arbitrary projector basis. The standard bases can be produced by the functions _P_x_, _P_y_ and _P_z_. The computational basis can be used directly via the _measure_computational_ function.
 
 ## Change Log
+18.12.2024
++ added full mixed state support (except for sparse matrices)
++ added random state generation functions
+
 08.12.2024
 + Added measurement framework
 + **Finished basic pure state framework**
