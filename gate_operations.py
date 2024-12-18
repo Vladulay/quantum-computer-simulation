@@ -1197,3 +1197,99 @@ def plot_measurement(measurement_dict, title="Measurement Outcomes", y_label = "
     
     return plt
 
+
+
+
+
+
+
+
+
+
+
+
+
+# Random state generation
+
+def generate_haar_random_state(dimension: int):
+    """
+    Generate a Haar random quantum state in a specified dimension.
+    """
+    # Generate a random complex vector
+    real_part = np.random.normal(size=dimension)
+    imaginary_part = np.random.normal(size=dimension)
+    random_complex_vector = real_part + 1j * imaginary_part
+
+    # Compute the norm (magnitude) of the complex vector
+    norm = np.linalg.norm(random_complex_vector)
+
+    # Normalize the vector
+    haar_random_state = random_complex_vector / norm     # No normalization check. I consider the system "if/not normalized" here.
+
+    return {
+        "Dimension": dimension,
+        "Real Part": real_part.tolist(), 
+        "Imaginary Part": imaginary_part.tolist(), 
+        "Random Complex Vector": random_complex_vector.tolist(), 
+        "Norm": norm, 
+        "Normalized Haar Random State": haar_random_state.tolist(), 
+        "Normalization Check": np.sum(np.abs(haar_random_state)**2)
+    }
+
+
+def generate_hilbert_schmidt_random_state(dimension: int):
+    """
+    Generate a Hilbert-Schmidt random quantum state (density matrix) in a given dimension.
+    """
+    # Step 1: Generate a random complex matrix G of size (dimension x dimension)
+    real_part = np.random.normal(size=(dimension, dimension))
+    imaginary_part = np.random.normal(size=(dimension, dimension))
+    G = real_part + 1j * imaginary_part
+
+    # Step 2: Compute GG^dagger
+    GG_dagger = np.dot(G, G.conjugate().T)
+
+    # Step 3: Normalize the matrix to make it a valid density matrix
+    trace = np.trace(GG_dagger)  # Compute the trace of GG^dagger
+    rho = GG_dagger / trace  # Normalize to ensure Tr(rho) = 1
+
+    # Return the details
+    return {
+        "Dimension": dimension,
+        "Random Complex Matrix G": G.tolist(),
+        "GG^dagger": GG_dagger.tolist(),
+        "Trace of GG^dagger": trace,
+        "Normalized Density Matrix (rho)": rho.tolist(),
+        "Normalization Check (Tr(rho))": np.trace(rho)
+    }
+
+
+def generate_bures_random_state(dimension: int):
+    """
+    Generate a Bures random quantum state (density matrix) in a given dimension.
+    """
+    # Step 1: Generate a random complex matrix G of size (dimension x dimension)
+    real_part = np.random.normal(size=(dimension, dimension))
+    imaginary_part = np.random.normal(size=(dimension, dimension))
+    G = real_part + 1j * imaginary_part
+
+    # Step 2: Compute GG^dagger
+    GG_dagger = np.dot(G, G.conjugate().T)
+
+    # Step 3: Add the identity matrix
+    B = np.eye(dimension) + GG_dagger
+
+    # Step 4: Normalize to create the density matrix
+    trace_B = np.trace(B)
+    rho = B / trace_B
+
+    # Return the details
+    return {
+        "Dimension": dimension,
+        "Random Complex Matrix G": G.tolist(),
+        "GG^dagger": GG_dagger.tolist(),
+        "Matrix B (I + GG^dagger)": B.tolist(),
+        "Trace of B": trace_B,
+        "Normalized Density Matrix (rho)": rho.tolist(),
+        "Normalization Check (Tr(rho))": np.trace(rho)
+    }
