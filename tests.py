@@ -960,6 +960,76 @@ class TestMixedStates(unittest.TestCase):
         self.assertTrue(compare)
     
 
+class TestChannels(unittest.TestCase):
+
+    def test_bitflip(self):
+        state = np.array([[1, 0], [0, 0]])
+        
+        state =  go.bit_flip_channel(state, 0.5)
+        
+        correct_state = np.array([[0.5, 0. ],[0. , 0.5]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
+    
+    
+    def test_bitflip2(self):
+        state = np.array([[1, 0], [0, 0]])
+        
+        instruction = go.instruction()
+        instruction.gate = "bitflip"
+        instruction.probability = 0.5
+        
+        state = go.apply_instruction(state, instruction,1)
+        
+        correct_state = np.array([[0.5, 0. ],[0. , 0.5]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
+        
+        
+    def test_bitflip3(self):
+        state = np.array([[1, 0], [0, 0]])
+        
+        instructions = go.create_instruction_list([["bitflip",0.5]])
+        
+        state = reduce(go.apply_instruction, instructions, state)
+        
+        correct_state = np.array([[0.5, 0. ],[0. , 0.5]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
+    
+    
+    def test_phaseflip(self):
+        state = np.array([[1j, 1j], [7j, 3+1j]]) 
+        
+        instructions = go.create_instruction_list([["phaseflip",0.7]])
+        
+        state = reduce(go.apply_instruction, instructions, state)
+        
+        correct_state = np.array([[0.+1.j , 0.-0.4j],[0.-2.8j, 3.+1.j ]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
+    
+    
+    def test_amplitude_damping(self):
+        state  = np.array([[0, 0], [0, 1]])  # |1><1|
+
+        instructions = go.create_instruction_list([["ampdamp",0.4]])
+        
+        state = reduce(go.apply_instruction, instructions, state)
+        
+        correct_state = np.array([[0.4, 0. ],[0.,  0.6]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
     
     
     

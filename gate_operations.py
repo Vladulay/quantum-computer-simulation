@@ -687,7 +687,7 @@ def CNOT_from_SWAP(qubit_amount: int, control_index: int, target_index: int):
 # Instruction syntax
 
 class instruction:
-    def __init__(self, gate=None, qubit=None, angle=None, direction=None):
+    def __init__(self, gate=None, qubit=None, angle=None, direction=None, probability=None):
         if gate is None:
             gate = ""
         self.gate = gate
@@ -703,6 +703,10 @@ class instruction:
         if angle is None:
             angle = 0.0
         self.angle = angle
+        
+        if probability is None:
+            probability = 1.0
+        self.probability = probability
     
     
     def create_from_list(instruction_list=None):
@@ -715,6 +719,11 @@ class instruction:
         
         list_size = len(instruction_list)
         
+        if gate == "bitflip" or gate == "phaseflip" or gate == "ampdamp":
+            probability = instruction_list[1]
+            self = instruction(gate,1, None, None, probability)
+            return self
+        
         if list_size == 3:
             angle = instruction_list[2]
             self = instruction(gate,qubit,angle)
@@ -724,7 +733,7 @@ class instruction:
             angle = instruction_list[2]
             direction = instruction_list[3]
             self = instruction(gate,qubit,angle, direction)
-            return self 
+            return self
         
         self = instruction(gate,qubit)
         return self
@@ -933,6 +942,15 @@ def apply_instruction(state ,instruction: instruction(), qubit_amount: int = Non
             case "SWAP":
                  gate = SWAP(qubit_amount, instruction.qubit[0], instruction.qubit[1])
                  state = gate_operation(state, gate, qubit_amount)
+                 return state
+            case "bitflip":
+                 state = bit_flip_channel(state, instruction.probability)
+                 return state
+            case "phaseflip":
+                 state = phase_flip_channel(state, instruction.probability)
+                 return state
+            case "ampdamp":
+                 state = amplitude_damping_channel(state, instruction.probability)
                  return state
             case _:
                  return state
@@ -1293,3 +1311,68 @@ def generate_bures_random_state(dimension: int):
         "Normalized Density Matrix (rho)": rho.tolist(),
         "Normalization Check (Tr(rho))": np.trace(rho)
     }
+
+
+
+
+
+
+
+
+
+
+
+
+# channels
+
+def bit_flip_channel(input_state, flip_probability):
+    """
+    Args:
+    - input_state: Input density matrix (2x2 numpy array).
+    - flip_probability: Probability of a bit flip (0 ≤ p ≤ 1).
+    """
+    if input_state.shape == (2,):
+        input_state = input_state @ input_state.T
+    
+    # Kraus operators
+    no_flip = (1 - flip_probability) * input_state        
+    flip = flip_probability * (X() @ input_state @ X())          
+    
+    output_state = no_flip + flip
+    
+    return output_state
+
+
+def phase_flip_channel(input_state, flip_probability):
+    """
+    Args:
+    - input_state: Input density matrix (2x2 numpy array).
+    - flip_probability: Probability of a phase flip (0 ≤ p ≤ 1).
+    """
+    # Kraus operators
+    no_flip = (1 - flip_probability) * input_state             
+    flip = flip_probability * (Z() @ input_state @ Z())          
+    
+    output_state = no_flip + flip
+    
+    return output_state
+
+
+def amplitude_damping_channel(state, damping):
+    """    
+    Args:
+    - input_state: Input density matrix (2x2 numpy array).
+    - damping: Probability of energy loss (0 ≤ gamma ≤ 1).
+    - Excited to Ground state transition
+    """
+    # Kraus operators for amplitude damping
+    E0 = np.array([[1, 0], [0, np.sqrt(1 - damping)]])  # No decay
+    E1 = np.array([[0, np.sqrt(damping)], [0, 0]])      # Decay from |1> to |0>
+    
+    # Conditions
+    no_decay = E0 @ state @ E0.T.conj()  # E0 rho E0^†
+    decay = E1 @ state @ E1.T.conj()     # E1 rho E1^†
+    
+    # Combine for results
+    state = no_decay + decay
+    return state
