@@ -719,7 +719,7 @@ class instruction:
         
         list_size = len(instruction_list)
         
-        if gate == "bitflip" or gate == "phaseflip" or gate == "ampdamp":
+        if gate == "bitflip" or gate == "phaseflip" or gate == "ampdamp" or gate == "depol":
             probability = instruction_list[1]
             self = instruction(gate,1, None, None, probability)
             return self
@@ -951,6 +951,9 @@ def apply_instruction(state ,instruction: instruction(), qubit_amount: int = Non
                  return state
             case "ampdamp":
                  state = amplitude_damping_channel(state, instruction.probability)
+                 return state
+            case "depol":
+                 state = depolarizing_channel(state, qubit_amount, instruction.probability)
                  return state
             case _:
                  return state
@@ -1375,4 +1378,16 @@ def amplitude_damping_channel(state, damping):
     
     # Combine for results
     state = no_decay + decay
+    return state
+
+
+def depolarizing_channel(state, qubit_amount, damping):
+    """    
+    Args:
+    - input_state: Input density matrix (2x2 numpy array).
+    - qubit_amount: int
+    - damping: Probability of depolarization.
+    """
+    state = damping * np.identity(2**qubit_amount,complex) / 2 + (1-damping) * state
+    
     return state

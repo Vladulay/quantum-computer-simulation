@@ -1030,6 +1030,20 @@ class TestChannels(unittest.TestCase):
         compare = np.allclose(state, correct_state)
                 
         self.assertTrue(compare)
+        
+    
+    def test_depolarizing_channel(self):
+        state  = np.array([[0, 0], [0, 1]])  # |1><1|
+
+        instructions = go.create_instruction_list([["depol",0.5]])
+        
+        state = reduce(go.apply_instruction, instructions, state)
+        
+        correct_state = np.array([[0.25+0.j , 0.  +0.j],  [0.  +0.j, 0.75+0.j]])
+        
+        compare = np.allclose(state, correct_state)
+                
+        self.assertTrue(compare)
     
     
     
