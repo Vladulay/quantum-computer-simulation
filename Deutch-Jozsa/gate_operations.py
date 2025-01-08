@@ -4,7 +4,6 @@ import random
 from scipy.sparse import csr_matrix
 from scipy.sparse import kron
 import itertools
-from functools import reduce
 
 import matplotlib.pyplot as plt
 
@@ -1392,66 +1391,3 @@ def depolarizing_channel(state, qubit_amount, damping):
     state = damping * np.identity(2**qubit_amount,complex) / 2 + (1-damping) * state
     
     return state
-
-
-
-
-
-
-
-
-
-# algorithms
-
-def deutsch_josza(function, bits):
-    """    
-    Checks whether the function taking in a bitstring of length bits is 
-    constant (1) or balanced (0)
-    Args:
-    - function: function in question {0,1}^n -> {0,1}.
-    - bits: bitstring length the function takes
-    Returns:
-    - int (1 constant or 0 balanced)
-    """
-    # some helper function
-    def indToState(n, k):
-        num = bin(k)[2:].zfill(n)
-        return np.array([int(x) for x in str(num)])
-    
-
-    
-    # prepare state
-    state = np.zeros((2**bits,))
-    state[0] = 1
-    
-    # hadamard gates
-    hadamard_instruction_list = ["H",[]]
-    bit = 1
-    while bit <= bits:
-        hadamard_instruction_list[1].append(bit)
-        bit += 1
-    instructions = create_instruction_list([hadamard_instruction_list])
-    state = reduce(apply_instruction, instructions, state).T
-    
-    # oracle
-    element = 0
-    while element < state.shape[0]:
-        state[element] = state[element]*(-1)**function(indToState(bits, element))
-        element += 1
-    
-    # hadamard round 2
-    state = reduce(apply_instruction, instructions, state).T
-    
-    # measurement
-    measurements = measure_computational(state,bits,1, False)
-    
-    key = ""
-    bit = 1
-    while bit <= bits:
-        key += "0"
-        bit += 1
-    
-    if(measurements[key]) == 1:
-        return 1
-    else:
-        return 0

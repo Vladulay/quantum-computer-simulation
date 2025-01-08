@@ -1044,9 +1044,8 @@ class TestChannels(unittest.TestCase):
         compare = np.allclose(state, correct_state)
                 
         self.assertTrue(compare)
-    
-    
-    
+
+
 
 if __name__ == '__main__':
     unittest.main()
