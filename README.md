@@ -3,10 +3,11 @@
 Here we develop a framework for quantum simulation. Apply quantum circuits to pure states and perform measurements.
 
 ## Features
-- Gate application via instruction list syntax
+- Gate & channel application via instruction list syntax
 - Measurements in arbitary bases via projectors (of all states only)
 - Supports both pure and mixed states
 - Supports sparse matrices for pure states
+- Deutsch-Josza algorithm
 
 ## How to use
 The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. 
@@ -40,11 +41,20 @@ The following instructions are possible:
 - ["Rx",[1,2,5], np.pi, np.array([0,1,0])] - apply x-rotation gate to qubit 1,2 and 5 with the angle $\pi$ about the axis [0,1,0]
 - ["CNOT",[2,1]] - apply CNOT gate with the control qubit 2 and the target qubit 1
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
+- ["bitflip",0.3] - apply bitflip channel to SINGLE QUBIT with flip probability 0.3
+- ["phaseflip",0.3] - apply phaseflip channel to SINGLE QUBIT with flip probability 0.3
+- ["ampdamp",0.3] - apply amplitude damping channel to SINGLE QUBIT with damping probability 0.3
+- ["depol",0.3] - apply depolarization channel with depolarization probability 0.3
+  
 
 ### Measurements
 A state can be measured a given amount of times via the _measure_projective_ function in any arbitrary projector basis. The standard bases can be produced by the functions _P_x_, _P_y_ and _P_z_. The computational basis can be used directly via the _measure_computational_ function.
 
 ## Change Log
+08.01.2025
++ added some quantum channels
++ added the Deutsch-Josza algorithm
+
 18.12.2024
 + added full mixed state support (except for sparse matrices)
 + added random state generation functions
