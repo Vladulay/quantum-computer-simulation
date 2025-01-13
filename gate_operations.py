@@ -1124,10 +1124,10 @@ def measure_projective(state, qubit_amount: int = 1, num_measurements: int = 1, 
     # Compute probabilities
     # pure states
     if len(state.shape) == 1 or 1 in state.shape:
-        probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+        probabilities = [max (np.real(np.vdot(state, P @ state)),0) for P in projectors]
     # mixed states
     else:
-        probabilities = [np.real(np.trace((P @ state))) for P in projectors]
+        probabilities = [max (np.real(np.trace((P @ state))),0) for P in projectors]
     
     # Simulate measurement outcomes
     outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
@@ -1152,8 +1152,7 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
     
     Returns:
         dict: Frequencies of outcomes or amount of outcomes.
-    """
-    
+    """    
     # Define computational basis projectors
     projectors = P_z(qubit_amount)
     
@@ -1163,10 +1162,10 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
     # Compute probabilities
     # pure states
     if len(state.shape) == 1 or 1 in state.shape:
-        probabilities = [np.real(np.vdot(state, P @ state)) for P in projectors]
+        probabilities = [max (np.real(np.vdot(state, P @ state)),0) for P in projectors]
     # mixed states
     else:
-        probabilities = [np.real(np.trace((P @ state))) for P in projectors]
+        probabilities = [max (np.real(np.trace((P @ state))),0) for P in projectors]
     
     # Simulate measurement outcomes
     outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
@@ -1441,6 +1440,83 @@ def deutsch_josza(function, bits):
     
     # hadamard round 2
     state = reduce(apply_instruction, instructions, state).T
+    
+    # measurement
+    measurements = measure_computational(state,bits,1, False)
+    
+    key = ""
+    bit = 1
+    while bit <= bits:
+        key += "0"
+        bit += 1
+    
+    if(measurements[key]) == 1:
+        return 1
+    else:
+        return 0
+    
+
+def deutsch_josza_noise(function, bits, noise_1 = None, p_1 = 0.0, noise_2 = None, p_2 = 0.0, noise_3 = None, p_3 = 0.0, noise_4 = None, p_4 = 0.0):
+    """    
+    Checks whether the function taking in a bitstring of length bits is 
+    constant (1) or balanced (0)
+    Args:
+    - function: function in question {0,1}^n -> {0,1}.
+    - bits: bitstring length the function takes
+    Returns:
+    - int (1 constant or 0 balanced)
+    """
+    # some helper function
+    def indToState(n, k):
+        num = bin(k)[2:].zfill(n)
+        return np.array([int(x) for x in str(num)])
+    
+
+    
+    # prepare state
+    state = np.zeros((2**bits,))
+    state[0] = 1
+    state = np.outer(state, state.conj())
+    
+    # noise 1
+    if noise_1:
+        state = noise_1(state,bits,p_1)
+    
+    # hadamard gates
+    hadamard_instruction_list = ["H",[]]
+    bit = 1
+    while bit <= bits:
+        hadamard_instruction_list[1].append(bit)
+        bit += 1
+    instructions = create_instruction_list([hadamard_instruction_list])
+    state = reduce(apply_instruction, instructions, state).T
+    
+    # noise 2
+    if noise_2:
+        state = noise_2(state,bits,p_2)
+    
+    # oracle
+    row = 0
+    col = 0
+    while row < state.shape[1]:
+        col = 0
+        while col < state.shape[0]:
+            state[col,row] = state[col,row]*(-1)**function(indToState(bits, row))
+            state[col,row] = state[col,row]*(-1)**function(indToState(bits, col))
+            
+            col += 1
+        row += 1
+    
+    # noise 3
+    if noise_3:
+        state = noise_3(state,bits,p_3)
+    
+    # hadamard round 2
+    state = reduce(apply_instruction, instructions, state).T
+    
+    # noise 4
+    if noise_4:
+        state = noise_4(state,bits,p_4)
     
     # measurement
     measurements = measure_computational(state,bits,1, False)

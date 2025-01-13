@@ -1044,6 +1044,23 @@ class TestChannels(unittest.TestCase):
         compare = np.allclose(state, correct_state)
                 
         self.assertTrue(compare)
+        
+
+    
+class TestAlgorithms(unittest.TestCase):
+
+    def test_deutsch_josza(self):
+        from deutsch_josza_black_box import black_box
+
+        bits = 1
+        
+        while bits < 6:
+            compare = np.allclose(go.deutsch_josza(black_box, bits), go.deutsch_josza_noise(black_box, bits))
+            
+            self.assertTrue(compare)
+            
+            bits += 1
+    
 
 
 
