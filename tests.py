@@ -963,9 +963,10 @@ class TestMixedStates(unittest.TestCase):
 class TestChannels(unittest.TestCase):
 
     def test_bitflip(self):
-        state = np.array([[1, 0], [0, 0]])
+        state = np.array([1, 0],dtype = complex)
+        state = np.outer(state, state.conj())
         
-        state =  go.bit_flip_channel(state, 0.5)
+        state =  go.bit_flip_channel(state, 0.5,1)
         
         correct_state = np.array([[0.5, 0. ],[0. , 0.5]])
         
@@ -975,7 +976,7 @@ class TestChannels(unittest.TestCase):
     
     
     def test_bitflip2(self):
-        state = np.array([[1, 0], [0, 0]])
+        state = np.array([[1, 0], [0, 0]],dtype = complex)
         
         instruction = go.instruction()
         instruction.gate = "bitflip"
@@ -993,7 +994,7 @@ class TestChannels(unittest.TestCase):
     def test_bitflip3(self):
         state = np.array([[1, 0], [0, 0]])
         
-        instructions = go.create_instruction_list([["bitflip",0.5]])
+        instructions = go.create_instruction_list([["bitflip",0.5,[1]]])
         
         state = reduce(go.apply_instruction, instructions, state)
         
@@ -1005,15 +1006,21 @@ class TestChannels(unittest.TestCase):
     
     
     def test_phaseflip(self):
-        state = np.array([[1j, 1j], [7j, 3+1j]]) 
+        state = np.array([1,0])
+        state = go.gate_operation(state, go.R_y(np.pi/2))
+        state = np.outer(state, state.conj())
         
-        instructions = go.create_instruction_list([["phaseflip",0.7]])
+        print(state)
+        
+        state2 = go.gate_operation(state, go.R_y(np.pi))
+
+        instructions = go.create_instruction_list([["phaseflip",1,[1]]])
         
         state = reduce(go.apply_instruction, instructions, state)
         
-        correct_state = np.array([[0.+1.j , 0.-0.4j],[0.-2.8j, 3.+1.j ]])
+        print(state)
         
-        compare = np.allclose(state, correct_state)
+        compare = np.allclose(state, state2)
                 
         self.assertTrue(compare)
     
@@ -1021,7 +1028,7 @@ class TestChannels(unittest.TestCase):
     def test_amplitude_damping(self):
         state  = np.array([[0, 0], [0, 1]])  # |1><1|
 
-        instructions = go.create_instruction_list([["ampdamp",0.4]])
+        instructions = go.create_instruction_list([["ampdamp",0.4,[1]]])
         
         state = reduce(go.apply_instruction, instructions, state)
         
@@ -1035,7 +1042,7 @@ class TestChannels(unittest.TestCase):
     def test_depolarizing_channel(self):
         state  = np.array([[0, 0], [0, 1]])  # |1><1|
 
-        instructions = go.create_instruction_list([["depol",0.5]])
+        instructions = go.create_instruction_list([["depol",0.5,1]])
         
         state = reduce(go.apply_instruction, instructions, state)
         

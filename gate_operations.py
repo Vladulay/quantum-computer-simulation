@@ -722,7 +722,11 @@ class instruction:
         
         if gate == "bitflip" or gate == "phaseflip" or gate == "ampdamp" or gate == "depol":
             probability = instruction_list[1]
+            #qubit = instruction_list[2]
             self = instruction(gate,1, None, None, probability)
+            
+            if gate == "bitflip" or gate == "phaseflip" or gate == "ampdamp":
+                self = instruction(gate,instruction_list[2], None, None, probability)
             return self
         
         if list_size == 3:
@@ -898,7 +902,14 @@ def apply_instruction(state ,instruction: instruction(), qubit_amount: int = Non
     """
     
     if qubit_amount is None:
-        qubit_amount = round(np.log2(len(state)))
+        if len(state.shape) == 1:
+            qubit_amount = round(np.log2(len(state)))
+        else:
+            #print(state[0])
+            qubit_amount = round(np.log2(len(state[0])))
+            
+        
+        
     
     if type(state) == np.ndarray:
         match instruction.gate:
@@ -945,13 +956,13 @@ def apply_instruction(state ,instruction: instruction(), qubit_amount: int = Non
                  state = gate_operation(state, gate, qubit_amount)
                  return state
             case "bitflip":
-                 state = bit_flip_channel(state, instruction.probability)
+                 state = bit_flip_channel(state, instruction.probability, instruction.qubit[0])
                  return state
             case "phaseflip":
-                 state = phase_flip_channel(state, instruction.probability)
+                 state = phase_flip_channel(state, instruction.probability, instruction.qubit[0])
                  return state
             case "ampdamp":
-                 state = amplitude_damping_channel(state, instruction.probability)
+                 state = amplitude_damping_channel(state, instruction.probability, instruction.qubit[0])
                  return state
             case "depol":
                  state = depolarizing_channel(state, qubit_amount, instruction.probability)
@@ -1157,15 +1168,17 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
     projectors = P_z(qubit_amount)
     
     # Normalize state
-    state = state / np.linalg.norm(state)
+    #state = state / np.linalg.norm(state)
     
     # Compute probabilities
     # pure states
     if len(state.shape) == 1 or 1 in state.shape:
         probabilities = [max (np.real(np.vdot(state, P @ state)),0) for P in projectors]
-    # mixed states
+    # density matrix
     else:
-        probabilities = [max (np.real(np.trace((P @ state))),0) for P in projectors]
+        probabilities = [max (np.round(np.real(np.trace((P @ state))),3) ,0) for P in projectors]
+        
+        #print(probabilities)
     
     # Simulate measurement outcomes
     outcomes = np.random.choice(len(projectors), size=num_measurements, p=probabilities)
@@ -1328,53 +1341,84 @@ def generate_bures_random_state(dimension: int):
 
 # channels
 
-def bit_flip_channel(input_state, flip_probability):
+def bit_flip_channel(input_state, flip_probability, qubit = 1):
     """
     Args:
     - input_state: Input density matrix (2x2 numpy array).
     - flip_probability: Probability of a bit flip (0 ≤ p ≤ 1).
     """
-    if input_state.shape == (2,):
+    # create density matrix, if necessary
+    if len(input_state.shape) == 1:
         input_state = input_state @ input_state.T
+    else:
+        if input_state.shape[0]>input_state.shape[1]:
+            input_state = input_state @ input_state.T
     
     # Kraus operators
-    no_flip = (1 - flip_probability) * input_state        
-    flip = flip_probability * (X() @ input_state @ X())          
+    no_flip = (1 - flip_probability) * input_state                
+    
+    instruction_list = ["X",[qubit]]
+    instructions = create_instruction_list([instruction_list])
+    flip = flip_probability * reduce(apply_instruction, instructions, input_state).T
     
     output_state = no_flip + flip
     
     return output_state
 
 
-def phase_flip_channel(input_state, flip_probability):
+def phase_flip_channel(input_state, flip_probability, qubit = 1):
     """
     Args:
     - input_state: Input density matrix (2x2 numpy array).
     - flip_probability: Probability of a phase flip (0 ≤ p ≤ 1).
     """
+    # create density matrix, if necessary
+    if len(input_state.shape) == 1:
+        input_state = input_state @ input_state.T
+    else:
+        if input_state.shape[0]>input_state.shape[1]:
+            input_state = input_state @ input_state.T
+    
     # Kraus operators
     no_flip = (1 - flip_probability) * input_state             
-    flip = flip_probability * (Z() @ input_state @ Z())          
+    
+    instruction_list = ["Z",[qubit]]
+    instructions = create_instruction_list([instruction_list])
+    flip = flip_probability * reduce(apply_instruction, instructions, input_state).T        
     
     output_state = no_flip + flip
     
     return output_state
 
 
-def amplitude_damping_channel(state, damping):
+def amplitude_damping_channel(state, damping, qubit = 1):
     """    
     Args:
     - input_state: Input density matrix (2x2 numpy array).
     - damping: Probability of energy loss (0 ≤ gamma ≤ 1).
     - Excited to Ground state transition
     """
+    # create density matrix, if necessary
+    if len(state.shape) == 1:
+        state = state @ state.T
+    else:
+        if state.shape[0]>state.shape[1]:
+            state = state @ state.T
+    
+    qubit_amount = round(np.log2(len(state[0])))
+    
     # Kraus operators for amplitude damping
     E0 = np.array([[1, 0], [0, np.sqrt(1 - damping)]])  # No decay
     E1 = np.array([[0, np.sqrt(damping)], [0, 0]])      # Decay from |1> to |0>
     
+    E0 = single_qubit_gate_to_full_gate(E0, qubit_amount, qubit)
+    E1 = single_qubit_gate_to_full_gate(E1, qubit_amount, qubit)
+    
     # Conditions
     no_decay = E0 @ state @ E0.T.conj()  # E0 rho E0^†
     decay = E1 @ state @ E1.T.conj()     # E1 rho E1^†
+    
+    
     
     # Combine for results
     state = no_decay + decay
@@ -1480,7 +1524,7 @@ def deutsch_josza_noise(function, bits, noise_1 = None, p_1 = 0.0, noise_2 = Non
     
     # noise 1
     if noise_1:
-        state = noise_1(state,bits,p_1)
+        state = noise_1(state,p_1)
     
     # hadamard gates
     hadamard_instruction_list = ["H",[]]
