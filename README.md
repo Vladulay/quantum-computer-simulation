@@ -1,6 +1,6 @@
 # Quantum Computing Simulation
 
-Here we develop a framework for quantum simulation. Apply quantum circuits to pure states and perform measurements.
+Here we develop a framework for quantum simulation. Quickly apply quantum circuits to pure & mixed states and perform measurements. Plot single qubits on the bloch sphere. Apply noise via channels and test its influence on the Deutsch-Josza algorithm.
 
 ## Features
 - Gate & channel application via instruction list syntax
@@ -10,7 +10,7 @@ Here we develop a framework for quantum simulation. Apply quantum circuits to pu
 - Deutsch-Josza algorithm
 
 ## How to use
-The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. 
+The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. The jupyter notebook _noisy deutsch josza.ipynb_ includes a script to test the influence of different noise types on the Deutsch-Josza algorithm.. 
 
 ### Single Qubit State Visualizer
 To visualize single qubit states between any transformations one ca use the function _plot_bloch_state_.
