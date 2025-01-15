@@ -41,9 +41,9 @@ The following instructions are possible:
 - ["Rx",[1,2,5], np.pi, np.array([0,1,0])] - apply x-rotation gate to qubit 1,2 and 5 with the angle $\pi$ about the axis [0,1,0]
 - ["CNOT",[2,1]] - apply CNOT gate with the control qubit 2 and the target qubit 1
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
-- ["bitflip",0.3] - apply bitflip channel to SINGLE QUBIT with flip probability 0.3
-- ["phaseflip",0.3] - apply phaseflip channel to SINGLE QUBIT with flip probability 0.3
-- ["ampdamp",0.3] - apply amplitude damping channel to SINGLE QUBIT with damping probability 0.3
+- ["bitflip",0.3,[1]] - apply bitflip channel with flip probability 0.3 to qubit 1
+- ["phaseflip",0.3,[1]] - apply phaseflip channel to SINGLE QUBIT with flip probability 0.3 to qubit 1
+- ["ampdamp",0.3,[1]] - apply amplitude damping channel to SINGLE QUBIT with damping probability 0.3 to qubit 1
 - ["depol",0.3] - apply depolarization channel with depolarization probability 0.3
   
 
