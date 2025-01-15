@@ -4,7 +4,7 @@ Here we develop a framework for quantum simulation. Quickly apply quantum circui
 
 ## Features
 - Gate & channel application via instruction list syntax
-- Measurements in arbitary bases via projectors (of all states only)
+- Measurements in arbitary bases via projectors
 - Supports both pure and mixed states
 - Supports sparse matrices for pure states
 - Deutsch-Josza algorithm
