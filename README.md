@@ -10,7 +10,7 @@ Here we develop a framework for quantum simulation. Quickly apply quantum circui
 - Deutsch-Josza algorithm
 
 ## How to use
-The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. The jupyter notebook _noisy deutsch josza.ipynb_ includes a script to test the influence of different noise types on the Deutsch-Josza algorithm.. 
+The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. The jupyter notebook _noisy deutsch josza.ipynb_ includes a script to test the influence of different noise types on the Deutsch-Josza algorithm.
 
 ### Single Qubit State Visualizer
 To visualize single qubit states between any transformations one ca use the function _plot_bloch_state_.
