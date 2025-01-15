@@ -1176,7 +1176,7 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
         probabilities = [max (np.real(np.vdot(state, P @ state)),0) for P in projectors]
     # density matrix
     else:
-        probabilities = [max (np.round(np.real(np.trace((P @ state))),3) ,0) for P in projectors]
+        probabilities = [max (np.real(np.trace((P @ state))) ,0) for P in projectors]
         
         #print(probabilities)
     
