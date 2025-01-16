@@ -1,16 +1,16 @@
 # Quantum Computing Simulation
 
-Here we develop a framework for quantum simulation. Apply quantum circuits to pure states and perform measurements.
+Here we develop a framework for quantum simulation. Quickly apply quantum circuits to pure & mixed states and perform measurements. Plot single qubits on the bloch sphere. Apply noise via channels and test its influence on the Deutsch-Josza algorithm.
 
 ## Features
 - Gate & channel application via instruction list syntax
-- Measurements in arbitary bases via projectors (of all states only)
+- Measurements in arbitary bases via projectors
 - Supports both pure and mixed states
 - Supports sparse matrices for pure states
 - Deutsch-Josza algorithm
 
 ## How to use
-The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. 
+The functions of interest are located inside _gate_operations.py_. To see examples of how to use this library consult the jupyter notebook _tutorial.ipynb_. The jupyter notebook _noisy deutsch josza.ipynb_ includes a script to test the influence of different noise types on the Deutsch-Josza algorithm.
 
 ### Single Qubit State Visualizer
 To visualize single qubit states between any transformations one ca use the function _plot_bloch_state_.
@@ -41,9 +41,9 @@ The following instructions are possible:
 - ["Rx",[1,2,5], np.pi, np.array([0,1,0])] - apply x-rotation gate to qubit 1,2 and 5 with the angle $\pi$ about the axis [0,1,0]
 - ["CNOT",[2,1]] - apply CNOT gate with the control qubit 2 and the target qubit 1
 - ["SWAP",[2,1]] - apply SWAP gate to the qubits 2 and 1
-- ["bitflip",0.3] - apply bitflip channel to SINGLE QUBIT with flip probability 0.3
-- ["phaseflip",0.3] - apply phaseflip channel to SINGLE QUBIT with flip probability 0.3
-- ["ampdamp",0.3] - apply amplitude damping channel to SINGLE QUBIT with damping probability 0.3
+- ["bitflip",0.3,[1]] - apply bitflip channel with flip probability 0.3 to qubit 1
+- ["phaseflip",0.3,[1]] - apply phaseflip channel to SINGLE QUBIT with flip probability 0.3 to qubit 1
+- ["ampdamp",0.3,[1]] - apply amplitude damping channel to SINGLE QUBIT with damping probability 0.3 to qubit 1
 - ["depol",0.3] - apply depolarization channel with depolarization probability 0.3
   
 
