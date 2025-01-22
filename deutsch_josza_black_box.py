@@ -6,3 +6,7 @@ def black_box(x):
         return 1
     else:
         return int(x[n // 2])
+    
+    
+    
+    

@@ -261,6 +261,8 @@ def single_qubit_gate_to_full_gate(gate ,qubit_amount: int, qubit_index: int):
 def multi_single_qubit_gates_to_full_gate(gate ,qubit_amount: int, qubit_indices: []): 
     single_qubit_gates = []
     
+    #print(qubit_amount)
+    
     index = 0
     while index < qubit_amount:
         if index + 1 in qubit_indices:
@@ -901,14 +903,20 @@ def apply_instruction(state ,instruction: instruction(), qubit_amount: int = Non
         np.array / scipy.csr_matrix: state after application
     """
     
-    if qubit_amount is None:
+    if qubit_amount is None or qubit_amount == 0:
         if len(state.shape) == 1:
             qubit_amount = round(np.log2(len(state)))
+        elif state.shape[0] == 1:
+            qubit_amount = round(np.log2(len(state[0])))
+        elif state.shape[1] == 1:
+            qubit_amount = round(np.log2(len(state[1])))
         else:
             #print(state[0])
             qubit_amount = round(np.log2(len(state[0])))
             
-        
+    # no idea why this can occur, but it fixes stuff
+    if qubit_amount == 0:
+        qubit_amount = round(np.log2(len(state)))
         
     
     if type(state) == np.ndarray:
@@ -1170,6 +1178,8 @@ def measure_computational(state, qubit_amount: int = 1, num_measurements: int = 
     # Normalize state
     #state = state / np.linalg.norm(state)
     
+    #print(state)
+    
     # Compute probabilities
     # pure states
     if len(state.shape) == 1 or 1 in state.shape:
@@ -1407,6 +1417,8 @@ def amplitude_damping_channel(state, damping, qubit = 1):
     
     qubit_amount = round(np.log2(len(state[0])))
     
+    #print(qubit_amount)
+    
     # Kraus operators for amplitude damping
     E0 = np.array([[1, 0], [0, np.sqrt(1 - damping)]])  # No decay
     E1 = np.array([[0, np.sqrt(damping)], [0, 0]])      # Decay from |1> to |0>
@@ -1422,6 +1434,9 @@ def amplitude_damping_channel(state, damping, qubit = 1):
     
     # Combine for results
     state = no_decay + decay
+    
+    #print(state)
+    
     return state
 
 
@@ -1432,7 +1447,7 @@ def depolarizing_channel(state, qubit_amount, damping):
     - qubit_amount: int
     - damping: Probability of depolarization.
     """
-    state = damping * np.identity(2**qubit_amount,complex) / 2 + (1-damping) * state
+    state = damping * np.identity(2**qubit_amount,complex) / 2**qubit_amount + (1-damping) * state
     
     return state
 

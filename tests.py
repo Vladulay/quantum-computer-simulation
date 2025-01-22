@@ -484,12 +484,13 @@ class TestGates(unittest.TestCase):
         
         
         # Computation with instruction list
-        instructions = go.create_instruction_list([["H",[1]],
-                                                   ["X",[2]],
-                                                   ["Rx",[2],np.pi],
-                                                   ["CNOT",[2,1]],
-                                                   ["R",[3],np.pi,np.array([0,1,0])],
-                                                   ["T",[1,2,3]]])
+        instructions = go.create_instruction_list(
+                        [["H",[1]],
+                         ["X",[2]],
+                         ["Rx",[2],np.pi],
+                         ["CNOT",[2,1]],
+                         ["R",[3],np.pi,np.array([0,1,0])],
+                         ["T",[1,2,3]]])
         
         state2 = reduce(go.apply_instruction, instructions, state)
         
@@ -1009,16 +1010,12 @@ class TestChannels(unittest.TestCase):
         state = np.array([1,0])
         state = go.gate_operation(state, go.R_y(np.pi/2))
         state = np.outer(state, state.conj())
-        
-        print(state)
-        
+             
         state2 = go.gate_operation(state, go.R_y(np.pi))
 
         instructions = go.create_instruction_list([["phaseflip",1,[1]]])
         
         state = reduce(go.apply_instruction, instructions, state)
-        
-        print(state)
         
         compare = np.allclose(state, state2)
                 
@@ -1037,6 +1034,22 @@ class TestChannels(unittest.TestCase):
         compare = np.allclose(state, correct_state)
                 
         self.assertTrue(compare)
+        
+        
+    def test_amplitude_damping2(self):
+        # PREPARE STATE
+        state = np.zeros((2**2,))
+        state[0] = 1
+        state = np.outer(state, state.conj())
+
+        instructions = go.create_instruction_list([["ampdamp",0.0,[1]]])
+        
+        state = reduce(go.apply_instruction, instructions, state)
+        
+        
+        #compare = np.allclose(state, correct_state)
+                
+        #self.assertTrue(compare)
         
     
     def test_depolarizing_channel(self):
